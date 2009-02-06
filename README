@@ -1,0 +1,13 @@
+
+==========
+spawn-fcgi
+==========
+
+:author: Jan Kneschke
+
+:abstract:
+  spawn-fcgi is used to spawn fastcgi applications
+
+Features
+--------
+- binds to IPv4 and unix sockets

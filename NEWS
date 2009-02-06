@@ -1,0 +1,8 @@
+
+====
+NEWS
+====
+
+- 1.6.0 -
+
+  * Separated spawn-fcgi from lighttpd
