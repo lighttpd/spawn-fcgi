@@ -70,15 +70,6 @@ static int fcgi_spawn_connection(char *appPath, char **appArgv, char *addr, unsi
 
 	socklen_t servlen;
 
-	if (child_count < 2) {
-		child_count = 5;
-	}
-
-	if (child_count > 256) {
-		child_count = 256;
-	}
-
-
 	if (unixsocket) {
 		memset(&fcgi_addr_un, 0, sizeof(fcgi_addr_un));
 
@@ -169,8 +160,10 @@ static int fcgi_spawn_connection(char *appPath, char **appArgv, char *addr, unsi
 				/* loose control terminal */
 				setsid();
 
-				/* is safe as we limit to 256 childs */
-				sprintf(cgi_childs, "PHP_FCGI_CHILDREN=%d", child_count);
+				if (child_count >= 0) {
+					snprintf(cgi_childs, sizeof(cgi_childs), "PHP_FCGI_CHILDREN=%d", child_count);
+					putenv(cgi_childs);
+				}
 
 				if(fcgi_fd != FCGI_LISTENSOCK_FILENO) {
 					close(FCGI_LISTENSOCK_FILENO);
@@ -192,10 +185,6 @@ static int fcgi_spawn_connection(char *appPath, char **appArgv, char *addr, unsi
 				for (i = 3; i < max_fd; i++) {
 					if (i != FCGI_LISTENSOCK_FILENO) close(i);
 				}
-
-				/* create environment */
-
-				putenv(cgi_childs);
 
 				/* fork and replace shell */
 				if (appArgv) {
@@ -299,7 +288,8 @@ static void show_help () {
 " -a <addr>    bind to ip address\n" \
 " -p <port>    bind to tcp-port\n" \
 " -s <path>    bind to unix-domain socket\n" \
-" -C <childs>  (PHP only) numbers of childs to spawn (default 5)\n" \
+" -C <childs>  (PHP only) numbers of childs to spawn (default: not setting\n" \
+"              the PHP_FCGI_CHILDREN env var - php defaults to 0)\n" \
 " -F <childs>  numbers of childs to fork (default 1)\n" \
 " -P <path>    name of PID-file for spawed process\n" \
 " -n           no fork (for daemontools)\n" \
@@ -320,7 +310,7 @@ int main(int argc, char **argv) {
                 *addr = NULL;
 	char **fcgi_app_argv = { NULL };
 	unsigned short port = 0;
-	int child_count = 5;
+	int child_count = -1;
 	int fork_count = 1;
 	int i_am_root, o;
 	int pid_fd = -1;
