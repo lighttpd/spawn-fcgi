@@ -100,8 +100,7 @@ static int fcgi_spawn_connection(char *appPath, char **appArgv, char *addr, unsi
 	}
 
 	if (-1 == (fcgi_fd = socket(socket_type, SOCK_STREAM, 0))) {
-		fprintf(stderr, "%s.%d\n",
-			__FILE__, __LINE__);
+		fprintf(stderr, "spawn-fcgi: couldn't create socket: %s", strerror(errno));
 		return -1;
 	}
 
@@ -116,29 +115,24 @@ static int fcgi_spawn_connection(char *appPath, char **appArgv, char *addr, unsi
 
 		/* reopen socket */
 		if (-1 == (fcgi_fd = socket(socket_type, SOCK_STREAM, 0))) {
-			fprintf(stderr, "%s.%d\n",
-				__FILE__, __LINE__);
+			fprintf(stderr, "spawn-fcgi: couldn't create socket: %s", strerror(errno));
 			return -1;
 		}
 
 		val = 1;
 		if (setsockopt(fcgi_fd, SOL_SOCKET, SO_REUSEADDR, &val, sizeof(val)) < 0) {
-			fprintf(stderr, "%s.%d\n",
-				__FILE__, __LINE__);
+			fprintf(stderr, "spawn-fcgi: couldn't set SO_REUSEADDR: %s", strerror(errno));
 			return -1;
 		}
 
 		/* create socket */
 		if (-1 == bind(fcgi_fd, fcgi_addr, servlen)) {
-			fprintf(stderr, "%s.%d: bind failed: %s\n",
-				__FILE__, __LINE__,
-				strerror(errno));
+			fprintf(stderr, "spawn-fcgi: bind failed: %s", strerror(errno));
 			return -1;
 		}
 
 		if (-1 == listen(fcgi_fd, 1024)) {
-			fprintf(stderr, "%s.%d: fd = -1\n",
-				__FILE__, __LINE__);
+			fprintf(stderr, "spawn-fcgi: listen failed: %s", strerror(errno));
 			return -1;
 		}
 
@@ -214,9 +208,7 @@ static int fcgi_spawn_connection(char *appPath, char **appArgv, char *addr, unsi
 
 				switch (waitpid(child, &status, WNOHANG)) {
 				case 0:
-					fprintf(stdout, "%s.%d: child spawned successfully: PID: %d\n",
-						__FILE__, __LINE__,
-						child);
+					fprintf(stdout, "spawn-fcgi: child spawned successfully: PID: %d\n", child);
 
 					/* write pid file */
 					if (pid_fd != -1) {
@@ -237,17 +229,15 @@ static int fcgi_spawn_connection(char *appPath, char **appArgv, char *addr, unsi
 					break;
 				default:
 					if (WIFEXITED(status)) {
-						fprintf(stderr, "%s.%d: child exited with: %d\n",
-							__FILE__, __LINE__, WEXITSTATUS(status));
+						fprintf(stderr, "spawn-fcgi: child exited with: %d\n",
+							WEXITSTATUS(status));
 						rc = WEXITSTATUS(status);
 					} else if (WIFSIGNALED(status)) {
-						fprintf(stderr, "%s.%d: child signaled: %d\n",
-							__FILE__, __LINE__,
+						fprintf(stderr, "spawn-fcgi: child signaled: %d\n",
 							WTERMSIG(status));
 						rc = 1;
 					} else {
-						fprintf(stderr, "%s.%d: child died somehow: %d\n",
-							__FILE__, __LINE__,
+						fprintf(stderr, "spawn-fcgi: child died somehow: exit status = %d\n",
 							status);
 						rc = status;
 					}
@@ -259,8 +249,7 @@ static int fcgi_spawn_connection(char *appPath, char **appArgv, char *addr, unsi
 		close(pid_fd);
 		pid_fd = -1;
 	} else {
-		fprintf(stderr, "%s.%d: socket is already used, can't spawn\n",
-			__FILE__, __LINE__);
+		fprintf(stderr, "spawn-fcgi: socket is already used, can't spawn\n");
 		return -1;
 	}
 
@@ -344,35 +333,28 @@ int main(int argc, char **argv) {
 		fcgi_app_argv = &argv[optind];
 	}
 
-	if ((fcgi_app == NULL && fcgi_app_argv == NULL) || (port == 0 && unixsocket == NULL)) {
-		show_help();
+	if (NULL == fcgi_app && NULL == fcgi_app_argv) {
+		fprintf(stderr, "spawn-fcgi: no fastcgi application given\n");
 		return -1;
 	}
 
-	if (unixsocket && port) {
-		fprintf(stderr, "%s.%d: %s\n",
-			__FILE__, __LINE__,
-			"either a unix domain socket or a tcp-port, but not both\n");
-
+	if (0 == port && NULL == unixsocket) {
+		fprintf(stderr, "spawn-fcgi: no socket given (use either -p or -a)\n");
+		return -1;
+	} else if (0 != port && NULL != unixsocket) {
+		fprintf(stderr, "spawn-fcgi: either a unix domain socket or a tcp-port, but not both\n");
 		return -1;
 	}
 
 	if (unixsocket && strlen(unixsocket) > sizeof(un.sun_path) - 1) {
-		fprintf(stderr, "%s.%d: %s\n",
-			__FILE__, __LINE__,
-			"path of the unix socket is too long\n");
-
+		fprintf(stderr, "spawn-fcgi: path of the unix socket is too long\n");
 		return -1;
 	}
 
 	/* UID handling */
 	if (!i_am_root && (geteuid() == 0 || getegid() == 0)) {
 		/* we are setuid-root */
-
-		fprintf(stderr, "%s.%d: %s\n",
-			__FILE__, __LINE__,
-			"Are you nuts ? Don't apply a SUID bit to this binary\n");
-
+		fprintf(stderr, "spawn-fcgi: Are you nuts ? Don't apply a SUID bit to this binary\n");
 		return -1;
 	}
 
@@ -380,38 +362,30 @@ int main(int argc, char **argv) {
 	    (-1 == (pid_fd = open(pid_file, O_WRONLY | O_CREAT | O_EXCL | O_TRUNC, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH)))) {
 		struct stat st;
 		if (errno != EEXIST) {
-			fprintf(stderr, "%s.%d: opening pid-file '%s' failed: %s\n",
-				__FILE__, __LINE__,
+			fprintf(stderr, "spawn-fcgi: opening pid-file '%s' failed: %s\n",
 				pid_file, strerror(errno));
-
 			return -1;
 		}
 
 		/* ok, file exists */
 
 		if (0 != stat(pid_file, &st)) {
-			fprintf(stderr, "%s.%d: stating pid-file '%s' failed: %s\n",
-				__FILE__, __LINE__,
+			fprintf(stderr, "spawn-fcgi: stating pid-file '%s' failed: %s\n",
 				pid_file, strerror(errno));
-
 			return -1;
 		}
 
 		/* is it a regular file ? */
 
 		if (!S_ISREG(st.st_mode)) {
-			fprintf(stderr, "%s.%d: pid-file exists and isn't regular file: '%s'\n",
-				__FILE__, __LINE__,
+			fprintf(stderr, "spawn-fcgi: pid-file exists and isn't regular file: '%s'\n",
 				pid_file);
-
 			return -1;
 		}
 
 		if (-1 == (pid_fd = open(pid_file, O_WRONLY | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH))) {
-			fprintf(stderr, "%s.%d: opening pid-file '%s' failed: %s\n",
-				__FILE__, __LINE__,
+			fprintf(stderr, "spawn-fcgi: opening pid-file '%s' failed: %s\n",
 				pid_file, strerror(errno));
-
 			return -1;
 		}
 	}
@@ -424,32 +398,23 @@ int main(int argc, char **argv) {
 
 		if (username) {
 			if (NULL == (pwd = getpwnam(username))) {
-				fprintf(stderr, "%s.%d: %s, %s\n",
-					__FILE__, __LINE__,
-					"can't find username", username);
+				fprintf(stderr, "spawn-fcgi: can't find username %s\n", username);
 				return -1;
 			}
 
 			if (pwd->pw_uid == 0) {
-				fprintf(stderr, "%s.%d: %s\n",
-					__FILE__, __LINE__,
-					"I will not set uid to 0\n");
+				fprintf(stderr, "spawn-fcgi: I will not set uid to 0\n");
 				return -1;
 			}
 		}
 
 		if (groupname) {
 			if (NULL == (grp = getgrnam(groupname))) {
-				fprintf(stderr, "%s.%d: %s %s\n",
-					__FILE__, __LINE__,
-					"can't find groupname",
-					groupname);
+				fprintf(stderr, "spawn-fcgi: can't find groupname %s\n", groupname);
 				return -1;
 			}
 			if (grp->gr_gid == 0) {
-				fprintf(stderr, "%s.%d: %s\n",
-					__FILE__, __LINE__,
-					"I will not set gid to 0\n");
+				fprintf(stderr, "spawn-fcgi: I will not set gid to 0\n");
 				return -1;
 			}
 
@@ -465,15 +430,11 @@ int main(int argc, char **argv) {
 
 		if (changeroot) {
 			if (-1 == chroot(changeroot)) {
-				fprintf(stderr, "%s.%d: %s %s\n",
-					__FILE__, __LINE__,
-					"chroot failed: ", strerror(errno));
+				fprintf(stderr, "spawn-fcgi: chroot failed: %s\n", strerror(errno));
 				return -1;
 			}
 			if (-1 == chdir("/")) {
-				fprintf(stderr, "%s.%d: %s %s\n",
-					__FILE__, __LINE__,
-					"chdir failed: ", strerror(errno));
+				fprintf(stderr, "spawn-fcgi: chdir failed: %s\n", strerror(errno));
 				return -1;
 			}
 		}
