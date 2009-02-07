@@ -58,7 +58,6 @@
 typedef int socklen_t;
 #endif
 
-#ifdef HAVE_SYS_UN_H
 static int fcgi_spawn_connection(char *appPath, char **appArgv, char *addr, unsigned short port, const char *unixsocket, int fork_count, int child_count, int pid_fd, int nofork) {
 	int fcgi_fd;
 	int socket_type, status, rc = 0;
@@ -295,8 +294,8 @@ static void show_help () {
 
 int main(int argc, char **argv) {
 	char *fcgi_app = NULL, *changeroot = NULL, *username = NULL,
-               *groupname = NULL, *unixsocket = NULL, *pid_file = NULL,
-                *addr = NULL;
+	     *groupname = NULL, *unixsocket = NULL, *pid_file = NULL,
+	     *addr = NULL;
 	char **fcgi_app_argv = { NULL };
 	unsigned short port = 0;
 	int child_count = -1;
@@ -450,10 +449,5 @@ int main(int argc, char **argv) {
 		}
 	}
 
-       return fcgi_spawn_connection(fcgi_app, fcgi_app_argv, addr, port, unixsocket, fork_count, child_count, pid_fd, nofork);
+	return fcgi_spawn_connection(fcgi_app, fcgi_app_argv, addr, port, unixsocket, fork_count, child_count, pid_fd, nofork);
 }
-#else
-int main() {
-	return -1;
-}
-#endif
