@@ -306,6 +306,11 @@ int main(int argc, char **argv) {
 	int nofork = 0;
 	struct sockaddr_un un;
 
+	if (argc < 2) { /* no arguments given */
+		show_help();
+		return -1;
+	}
+
 	i_am_root = (getuid() == 0);
 
 	while (-1 != (o = getopt(argc, argv, "c:f:g:hna:p:u:vC:F:s:P:"))) {
