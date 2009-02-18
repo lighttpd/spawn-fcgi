@@ -9,3 +9,4 @@ NEWS
   * Remove limits für php children; per default the PHP_FCGI_CHILDREN var is not changed (php defaults to no children, one worker)
   * Modified the log messages format (more details on errors, no source line)
   * Only try to connect to unix socket (not tcp) before spawning (fixes again #1575)
+  * Only disconnect from terminal in fork mode (keep stderr/stdout open in nofork mode)

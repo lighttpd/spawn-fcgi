@@ -162,9 +162,6 @@ static int fcgi_spawn_connection(char *appPath, char **appArgv, char *addr, unsi
 
 			int i = 0;
 
-			/* loose control terminal */
-			setsid();
-
 			if (child_count >= 0) {
 				snprintf(cgi_childs, sizeof(cgi_childs), "PHP_FCGI_CHILDREN=%d", child_count);
 				putenv(cgi_childs);
@@ -176,15 +173,19 @@ static int fcgi_spawn_connection(char *appPath, char **appArgv, char *addr, unsi
 				close(fcgi_fd);
 			}
 
-			max_fd = open("/dev/null", O_RDWR);
-			close(STDERR_FILENO);
-			dup2(max_fd, STDERR_FILENO);
-			close(max_fd);
+			/* loose control terminal */
+			if (!nofork) {
+				setsid();
 
-			max_fd = open("/dev/null", O_RDWR);
-			close(STDOUT_FILENO);
-			dup2(max_fd, STDOUT_FILENO);
-			close(max_fd);
+				max_fd = open("/dev/null", O_RDWR);
+				if (-1 != max_fd) {
+					if (max_fd != STDOUT_FILENO) dup2(max_fd, STDOUT_FILENO);
+					if (max_fd != STDERR_FILENO) dup2(max_fd, STDERR_FILENO);
+					if (max_fd != STDOUT_FILENO && max_fd != STDERR_FILENO) close(max_fd);
+				} else {
+					fprintf(stderr, "spawn-fcgi: couldn't open and redirect stdout/stderr to '/dev/null': %s\n", strerror(errno));
+				}
+			}
 
 			/* we don't need the client socket */
 			for (i = 3; i < max_fd; i++) {
@@ -204,6 +205,8 @@ static int fcgi_spawn_connection(char *appPath, char **appArgv, char *addr, unsi
 				execl("/bin/sh", "sh", "-c", b, (char *)NULL);
 			}
 
+			/* in nofork mode stderr is still open */
+			fprintf(stderr, "spawn-fcgi: exec failed: %s\n", strerror(errno));
 			exit(errno);
 
 			break;
