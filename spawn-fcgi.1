@@ -11,7 +11,8 @@ spawn-fcgi \- Spawns FastCGI processes
 .B spawn-fcgi
 \-h
 .SH DESCRIPTION
-\fIspawn-fcgi\fP is used to spawn remote FastCGI processes.
+\fIspawn-fcgi\fP is used to spawn remote FastCGI processes (but may be used
+for local processes, too).
 .SH OPTIONS
 \fIspawn-fcgi\fP accepts the following options:
 .TP 8
@@ -30,13 +31,15 @@ TCP port to bind to (for TCP/IP-based IPC)
 Path to the Unix-domain socket to bind to (for Unix sockets-based IPC)
 .TP 8
 .B  \-C <children>
-(PHP only) Number of children to spawn. Defaults to 5.
+(PHP only) Number of children to spawn by setting the PHP_FCGI_CHILDREN
+environment variable. Default is not to overwrite the environment variable;
+php will spawn no childs if the var is not set (same as setting it to 0).
 .TP 8
 .B  \-F <children>
 Number of children to fork. Defaults to 1.
 .TP 8
 .B  \-P <path>
-Name of the PID file for spawned processes
+Name of the PID file for spawned processes (ignored in no-fork mode)
 .TP 8
 .B  \-n
 No forking should take place (for daemontools)
@@ -48,9 +51,10 @@ Chroot to specified directory (can only be invoked by root)
 User ID to change to (can only be invoked by root)
 .TP 8
 .B  \-g
-Group ID to change to (can only be invoked by root)
+Group ID to change to (can only be invoked by root). Defaults to primary group
+of user if -u is given,
 .TP 8
-.B  \-h
+.B  \-?, \-h
 General usage instructions
 .TP 8
 .B  \-v

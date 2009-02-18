@@ -359,7 +359,7 @@ static void show_help () {
 "(root only)\n" \
 " -c <dir>     chroot to directory\n" \
 " -u <user>    change to user-id\n" \
-" -g <group>   change to group-id (default: default group of user if -u is given)\n" \
+" -g <group>   change to group-id (default: primary group of user if -u is given)\n" \
 ;
 	write(1, b, strlen(b));
 }
