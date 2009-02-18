@@ -12,3 +12,4 @@ NEWS
   * Only disconnect from terminal in fork mode (keep stderr/stdout open in nofork mode)
   * Allow numerical user and group ids for -u/-g (fixes #1141)
   * Ignore pid-file option in no-fork mode (instead of producing empty file)
+  * Fix error handling for unix-socket-connect test

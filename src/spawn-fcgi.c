@@ -95,20 +95,23 @@ static int fcgi_spawn_connection(char *appPath, char **appArgv, char *addr, unsi
 			return -1;
 		}
 
-		if (-1 != connect(fcgi_fd, fcgi_addr, servlen)) {
-			switch (errno) {
-			case EADDRINUSE:
-				fprintf(stderr, "spawn-fcgi: socket is already in use, can't spawn\n");
-				break;
-			default:
-				fprintf(stderr, "spawn-fcgi: connect failed: %s\n", strerror(errno));
-				break;
-			}
+		if (0 == connect(fcgi_fd, fcgi_addr, servlen)) {
+			fprintf(stderr, "spawn-fcgi: socket is already in use, can't spawn\n");
+			close(fcgi_fd);
 			return -1;
 		}
 
 		/* cleanup previous socket if it exists */
-		unlink(unixsocket);
+		if (-1 == unlink(unixsocket)) {
+			switch (errno) {
+			case ENOENT:
+				break;
+			default:
+				fprintf(stderr, "spawn-fcgi: removing old socket failed: %s\n", strerror(errno));
+				return -1;
+			}
+		}
+
 		close(fcgi_fd);
 	} else {
 		memset(&fcgi_addr_in, 0, sizeof(fcgi_addr_in));
