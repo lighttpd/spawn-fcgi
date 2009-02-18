@@ -269,6 +269,64 @@ static int fcgi_spawn_connection(char *appPath, char **appArgv, char *addr, unsi
 	return rc;
 }
 
+static int find_user_group(const char *user, const char *group, uid_t *uid, gid_t *gid, const char **username) {
+	uid_t my_uid = 0;
+	gid_t my_gid = 0;
+	struct passwd *my_pwd;
+	struct group *my_grp;
+	*uid = 0; *gid = 0;
+	if (username) *username = NULL;
+
+	if (user) {
+		my_uid = strtol(user, NULL, 10);
+
+		if (my_uid <= 0) {
+			if (NULL == (my_pwd = getpwnam(user))) {
+				fprintf(stderr, "spawn-fcgi: can't find username %s\n", user);
+				return -1;
+			}
+			my_uid = my_pwd->pw_uid;
+
+			if (my_uid == 0) {
+				fprintf(stderr, "spawn-fcgi: I will not set uid to 0\n");
+				return -1;
+			}
+
+			if (username) *username = user;
+		} else {
+			my_pwd = getpwuid(my_uid);
+			if (username) *username = my_pwd->pw_name;
+		}
+	}
+
+	if (group) {
+		my_gid = strtol(group, NULL, 10);
+
+		if (my_gid <= 0) {
+			if (NULL == (my_grp = getgrnam(group))) {
+				fprintf(stderr, "spawn-fcgi: can't find groupname %s\n", group);
+				return -1;
+			}
+			my_gid = my_grp->gr_gid;
+
+			if (my_gid == 0) {
+				fprintf(stderr, "spawn-fcgi: I will not set gid to 0\n");
+				return -1;
+			}
+		}
+	} else if (my_pwd) {
+		my_gid = my_pwd->pw_gid;
+
+		if (my_gid == 0) {
+			fprintf(stderr, "spawn-fcgi: I will not set gid to 0\n");
+			return -1;
+		}
+	}
+
+	*uid = my_uid;
+	*gid = my_gid;
+	return 0;
+}
 
 static void show_version () {
 	char *b = "spawn-fcgi" "-" PACKAGE_VERSION \
@@ -294,11 +352,11 @@ static void show_help () {
 " -P <path>    name of PID-file for spawed process\n" \
 " -n           no fork (for daemontools)\n" \
 " -v           show version\n" \
-" -h           show this help\n" \
+" -?, -h       show this help\n" \
 "(root only)\n" \
 " -c <dir>     chroot to directory\n" \
 " -u <user>    change to user-id\n" \
-" -g <group>   change to group-id\n" \
+" -g <group>   change to group-id (default: default group of user if -u is given)\n" \
 ;
 	write(1, b, strlen(b));
 }
@@ -324,7 +382,7 @@ int main(int argc, char **argv) {
 
 	i_am_root = (getuid() == 0);
 
-	while (-1 != (o = getopt(argc, argv, "c:f:g:hna:p:u:vC:F:s:P:"))) {
+	while (-1 != (o = getopt(argc, argv, "c:f:g:?hna:p:u:vC:F:s:P:"))) {
 		switch(o) {
 		case 'f': fcgi_app = optarg; break;
 		case 'a': addr = optarg;/* ip addr */ break;
@@ -338,6 +396,7 @@ int main(int argc, char **argv) {
 		case 'n': nofork = 1; break;
 		case 'P': pid_file = optarg; /* PID file */ break;
 		case 'v': show_version(); return 0;
+		case '?':
 		case 'h': show_help(); return 0;
 		default:
 			show_help();
@@ -407,43 +466,22 @@ int main(int argc, char **argv) {
 	}
 
 	if (i_am_root) {
-		struct group *grp = NULL;
-		struct passwd *pwd = NULL;
+		uid_t uid;
+		gid_t gid;
+		const char* real_username;
 
-		/* set user and group */
+		if (-1 == find_user_group(username, groupname, &uid, &gid, &real_username))
+			return -1;
 
-		if (username) {
-			if (NULL == (pwd = getpwnam(username))) {
-				fprintf(stderr, "spawn-fcgi: can't find username %s\n", username);
-				return -1;
+		/* Change group before chroot, when we have access
+		 * to /etc/group
+		 */
+		if (gid != 0) {
+			setgid(gid);
+			setgroups(0, NULL);
+			if (real_username) {
+				initgroups(real_username, gid);
 			}
-
-			if (pwd->pw_uid == 0) {
-				fprintf(stderr, "spawn-fcgi: I will not set uid to 0\n");
-				return -1;
-			}
-		}
-
-		if (groupname) {
-			if (NULL == (grp = getgrnam(groupname))) {
-				fprintf(stderr, "spawn-fcgi: can't find groupname %s\n", groupname);
-				return -1;
-			}
-			if (grp->gr_gid == 0) {
-				fprintf(stderr, "spawn-fcgi: I will not set gid to 0\n");
-				return -1;
-			}
-
-			/* Change group before chroot, when we have access
-			 * to /etc/group
-			 */
-			setgid(grp->gr_gid);
-			setgroups(0, NULL); 
-
-			if (username) {
-				initgroups(username, grp->gr_gid);
-			}
-
 		}
 
 		if (changeroot) {
@@ -458,8 +496,8 @@ int main(int argc, char **argv) {
 		}
 
 		/* drop root privs */
-		if (username) {
-			setuid(pwd->pw_uid);
+		if (uid != 0) {
+			setuid(uid);
 		}
 	}
 
