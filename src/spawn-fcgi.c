@@ -349,7 +349,7 @@ static void show_help () {
 " -C <childs>  (PHP only) numbers of childs to spawn (default: not setting\n" \
 "              the PHP_FCGI_CHILDREN env var - php defaults to 0)\n" \
 " -F <childs>  numbers of childs to fork (default 1)\n" \
-" -P <path>    name of PID-file for spawed process\n" \
+" -P <path>    name of PID-file for spawed process (ignored in no-fork mode)\n" \
 " -n           no fork (for daemontools)\n" \
 " -v           show version\n" \
 " -?, -h       show this help\n" \
@@ -432,6 +432,8 @@ int main(int argc, char **argv) {
 		fprintf(stderr, "spawn-fcgi: Are you nuts ? Don't apply a SUID bit to this binary\n");
 		return -1;
 	}
+
+	if (nofork) pid_file = NULL; /* ignore pid file in no-fork mode */
 
 	if (pid_file &&
 	    (-1 == (pid_fd = open(pid_file, O_WRONLY | O_CREAT | O_EXCL | O_TRUNC, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH)))) {
