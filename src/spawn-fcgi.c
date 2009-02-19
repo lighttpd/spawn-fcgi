@@ -349,7 +349,7 @@ static void show_help () {
 " -a <addr>    bind to ip address\n" \
 " -p <port>    bind to tcp-port\n" \
 " -s <path>    bind to unix-domain socket\n" \
-" -C <childs>  (PHP only) numbers of childs to spawn (default: not setting\n" \
+" -C <childs>  (PHP only) numbers of childs to spawn (default: no setting\n" \
 "              the PHP_FCGI_CHILDREN env var - php defaults to 0)\n" \
 " -F <childs>  numbers of childs to fork (default 1)\n" \
 " -P <path>    name of PID-file for spawed process (ignored in no-fork mode)\n" \
