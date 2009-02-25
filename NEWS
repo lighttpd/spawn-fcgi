@@ -14,3 +14,4 @@ NEWS
   * Ignore pid-file option in no-fork mode (instead of producing empty file)
   * Fix error handling for unix-socket-connect test
   * Man page update
+  * Use header include order from 1.4.x
