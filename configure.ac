@@ -37,5 +37,22 @@ AC_FUNC_SELECT_ARGTYPES
 AC_FUNC_STAT
 AC_CHECK_FUNCS([dup2 memset putenv select socket strerror strtol])
 
+# check for extra compiler options (warning options)
+if test "${GCC}" = "yes"; then
+    CFLAGS="${CFLAGS} -Wall -W -Wshadow -pedantic -std=gnu99"
+fi
+
+AC_ARG_ENABLE(extra-warnings,
+ AC_HELP_STRING([--enable-extra-warnings],[enable extra warnings (gcc specific)]),
+ [case "${enableval}" in
+   yes) extrawarnings=true ;;
+    no) extrawarnings=false ;;
+     *) AC_MSG_ERROR(bad value ${enableval} for --enable-extra-warnings) ;;
+  esac],[extrawarnings=false])
+
+if test x$extrawarnings = xtrue; then
+    CFLAGS="${CFLAGS} -g -O2 -g2 -Wall -Wmissing-declarations -Wdeclaration-after-statement -Wno-pointer-sign -Wcast-align -Winline -Wsign-compare -Wnested-externs -Wpointer-arith -Wl,--as-needed -Wformat-security"
+fi
+
 AC_CONFIG_FILES([Makefile src/Makefile])
 AC_OUTPUT

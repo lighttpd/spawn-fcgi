@@ -11,3 +11,26 @@ spawn-fcgi
 Features
 --------
 - binds to IPv4 and unix sockets
+
+
+Build
+=====
+
+If ./configure is missing, run ./autogen.sh.
+
+  ./configure
+  make
+  make install
+
+Alternatively you can use the cmake build system (may not work
+on every platform):
+
+  cmake .
+  make
+  make install
+
+
+Usage
+=====
+
+See man page.
