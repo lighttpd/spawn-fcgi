@@ -276,8 +276,8 @@ static int fcgi_spawn_connection(char *appPath, char **appArgv, char *addr, unsi
 static int find_user_group(const char *user, const char *group, uid_t *uid, gid_t *gid, const char **username) {
 	uid_t my_uid = 0;
 	gid_t my_gid = 0;
-	struct passwd *my_pwd;
-	struct group *my_grp;
+	struct passwd *my_pwd = NULL;
+	struct group *my_grp = NULL;
 	*uid = 0; *gid = 0;
 	if (username) *username = NULL;
 

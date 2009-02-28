@@ -15,3 +15,4 @@ NEWS
   * Fix error handling for unix-socket-connect test
   * Man page update
   * Use header include order from 1.4.x
+  * Fix segfault due to uninitialized var
