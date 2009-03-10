@@ -3,7 +3,11 @@
 NEWS
 ====
 
-- 1.6.0 -
+- 1.6.1 -
+
+  *
+
+- 1.6.0 - 2009-02-28
 
   * Separated spawn-fcgi from lighttpd
   * Remove limits for php children; per default the PHP_FCGI_CHILDREN var is not changed (php defaults to no children, one worker)
