@@ -333,8 +333,9 @@ static int find_user_group(const char *user, const char *group, uid_t *uid, gid_
 }
 
 static void show_version () {
-	char *b = "spawn-fcgi" "-" PACKAGE_VERSION \
+	const char *b = PACKAGE_NAME "-" PACKAGE_VERSION \
 " - spawns fastcgi processes\n"
+"Build-Date: " __DATE__ " " __TIME__ "\n";
 ;
 	write(1, b, strlen(b));
 }
