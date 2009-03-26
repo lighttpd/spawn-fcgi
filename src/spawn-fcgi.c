@@ -59,19 +59,14 @@
 typedef int socklen_t;
 #endif
 
-static int fcgi_spawn_connection(char *appPath, char **appArgv, char *addr, unsigned short port, const char *unixsocket, int fork_count, int child_count, int pid_fd, int nofork) {
-	int fcgi_fd;
-	int socket_type, status, rc = 0;
-	struct timeval tv = { 0, 100 * 1000 };
+static int bind_socket(const char *addr, unsigned short port, const char *unixsocket, uid_t uid, gid_t gid, int mode) {
+	int fcgi_fd, socket_type, val;
 
 	struct sockaddr_un fcgi_addr_un;
 	struct sockaddr_in fcgi_addr_in;
 	struct sockaddr *fcgi_addr;
 
 	socklen_t servlen;
-
-	pid_t child;
-	int val;
 
 	if (unixsocket) {
 		memset(&fcgi_addr_un, 0, sizeof(fcgi_addr_un));
@@ -146,10 +141,39 @@ static int fcgi_spawn_connection(char *appPath, char **appArgv, char *addr, unsi
 		return -1;
 	}
 
+	if (unixsocket) {
+		if (0 != uid || 0 != gid) {
+			if (0 == uid) uid = -1;
+			if (0 == gid) gid = -1;
+			if (-1 == chown(unixsocket, uid, gid)) {
+				fprintf(stderr, "spawn-fcgi: couldn't chown socket: %s\n", strerror(errno));
+				close(fcgi_fd);
+				unlink(unixsocket);
+				return -1;
+			}
+
+			if (-1 == chmod(unixsocket, mode)) {
+				fprintf(stderr, "spawn-fcgi: couldn't chmod socket: %s\n", strerror(errno));
+				close(fcgi_fd);
+				unlink(unixsocket);
+				return -1;
+			}
+		}
+	}
+
 	if (-1 == listen(fcgi_fd, 1024)) {
 		fprintf(stderr, "spawn-fcgi: listen failed: %s\n", strerror(errno));
 		return -1;
 	}
+
+	return fcgi_fd;
+}
+
+static int fcgi_spawn_connection(char *appPath, char **appArgv, int fcgi_fd, int fork_count, int child_count, int pid_fd, int nofork) {
+	int status, rc = 0;
+	struct timeval tv = { 0, 100 * 1000 };
+
+	pid_t child;
 
 	while (fork_count-- > 0) {
 
@@ -351,6 +375,7 @@ static void show_help () {
 " -a <addr>    bind to ip address\n" \
 " -p <port>    bind to tcp-port\n" \
 " -s <path>    bind to unix-domain socket\n" \
+" -M <mode>    change unix-domain socket mode\n" \
 " -C <childs>  (PHP only) numbers of childs to spawn (default: not setting\n" \
 "              the PHP_FCGI_CHILDREN env var - php defaults to 0)\n" \
 " -F <childs>  numbers of childs to fork (default 1)\n" \
@@ -360,8 +385,11 @@ static void show_help () {
 " -?, -h       show this help\n" \
 "(root only)\n" \
 " -c <dir>     chroot to directory\n" \
+" -S           create socket before chroot()ing (default is to create the socket in the chroot)\n" \
 " -u <user>    change to user-id\n" \
 " -g <group>   change to group-id (default: primary group of user if -u is given)\n" \
+" -U <user>    change unix-domain socket owner to user-id\n" \
+" -G <group>   change unix-domain socket group to group-id\n" \
 ;
 	write(1, b, strlen(b));
 }
@@ -370,15 +398,19 @@ static void show_help () {
 int main(int argc, char **argv) {
 	char *fcgi_app = NULL, *changeroot = NULL, *username = NULL,
 	     *groupname = NULL, *unixsocket = NULL, *pid_file = NULL,
+	     *sockusername = NULL, *sockgroupname = NULL,
 	     *addr = NULL;
 	char **fcgi_app_argv = { NULL };
 	unsigned short port = 0;
+	int sockmode = -1;
 	int child_count = -1;
 	int fork_count = 1;
 	int i_am_root, o;
 	int pid_fd = -1;
 	int nofork = 0;
+	int sockbeforechroot = 0;
 	struct sockaddr_un un;
+	int fcgi_fd = -1;
 
 	if (argc < 2) { /* no arguments given */
 		show_help();
@@ -387,7 +419,7 @@ int main(int argc, char **argv) {
 
 	i_am_root = (getuid() == 0);
 
-	while (-1 != (o = getopt(argc, argv, "c:f:g:?hna:p:u:vC:F:s:P:"))) {
+	while (-1 != (o = getopt(argc, argv, "c:f:g:?hna:p:u:vC:F:s:P:U:G:M:S"))) {
 		switch(o) {
 		case 'f': fcgi_app = optarg; break;
 		case 'a': addr = optarg;/* ip addr */ break;
@@ -398,6 +430,10 @@ int main(int argc, char **argv) {
 		case 'c': if (i_am_root) { changeroot = optarg; }/* chroot() */ break;
 		case 'u': if (i_am_root) { username = optarg; } /* set user */ break;
 		case 'g': if (i_am_root) { groupname = optarg; } /* set group */ break;
+		case 'U': if (i_am_root) { sockusername = optarg; } /* set socket user */ break;
+		case 'G': if (i_am_root) { sockgroupname = optarg; } /* set socket group */ break;
+		case 'S': if (i_am_root) { sockbeforechroot = 1; } /* open socket before chroot() */ break;
+		case 'M': sockmode = strtol(optarg, NULL, 0); /* set socket mode */ break;
 		case 'n': nofork = 1; break;
 		case 'P': pid_file = optarg; /* PID file */ break;
 		case 'v': show_version(); return 0;
@@ -419,7 +455,7 @@ int main(int argc, char **argv) {
 	}
 
 	if (0 == port && NULL == unixsocket) {
-		fprintf(stderr, "spawn-fcgi: no socket given (use either -p or -a)\n");
+		fprintf(stderr, "spawn-fcgi: no socket given (use either -p or -s)\n");
 		return -1;
 	} else if (0 != port && NULL != unixsocket) {
 		fprintf(stderr, "spawn-fcgi: either a unix domain socket or a tcp-port, but not both\n");
@@ -473,11 +509,20 @@ int main(int argc, char **argv) {
 	}
 
 	if (i_am_root) {
-		uid_t uid;
-		gid_t gid;
+		uid_t uid, sockuid;
+		gid_t gid, sockgid;
 		const char* real_username;
 
 		if (-1 == find_user_group(username, groupname, &uid, &gid, &real_username))
+			return -1;
+
+		if (-1 == find_user_group(sockusername, sockgroupname, &sockuid, &sockgid, NULL))
+			return -1;
+
+		if (0 == sockuid) sockuid = uid;
+		if (0 == sockgid) sockgid = gid;
+
+		if (sockbeforechroot && -1 == (fcgi_fd = bind_socket(addr, port, unixsocket, sockuid, sockgid, sockmode)))
 			return -1;
 
 		/* Change group before chroot, when we have access
@@ -502,11 +547,17 @@ int main(int argc, char **argv) {
 			}
 		}
 
+		if (!sockbeforechroot && -1 == (fcgi_fd = bind_socket(addr, port, unixsocket, sockuid, sockgid, sockmode)))
+			return -1;
+
 		/* drop root privs */
 		if (uid != 0) {
 			setuid(uid);
 		}
+	} else {
+		if (-1 == (fcgi_fd = bind_socket(addr, port, unixsocket, 0, 0, sockmode)))
+			return -1;
 	}
 
-	return fcgi_spawn_connection(fcgi_app, fcgi_app_argv, addr, port, unixsocket, fork_count, child_count, pid_fd, nofork);
+	return fcgi_spawn_connection(fcgi_app, fcgi_app_argv, fcgi_fd, fork_count, child_count, pid_fd, nofork);
 }
