@@ -386,7 +386,7 @@ static void show_help () {
 " -C <childs>  (PHP only) numbers of childs to spawn (default: not setting\n" \
 "              the PHP_FCGI_CHILDREN env var - php defaults to 0)\n" \
 " -F <childs>  numbers of childs to fork (default 1)\n" \
-" -P <path>    name of PID-file for spawed process (ignored in no-fork mode)\n" \
+" -P <path>    name of PID-file for spawned process (ignored in no-fork mode)\n" \
 " -n           no fork (for daemontools)\n" \
 " -v           show version\n" \
 " -?, -h       show this help\n" \
