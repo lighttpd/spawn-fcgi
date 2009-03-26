@@ -5,7 +5,6 @@ cmake_policy(VERSION 2.6.0)
 PROJECT(spawn-fcgi)
 SET(PACKAGE_NAME ${CMAKE_PROJECT_NAME})
 SET(PACKAGE_VERSION 1.6.1)
-EXEC_PROGRAM(date ARGS "'+%b %d %Y %H:%M:%S UTC'" OUTPUT_VARIABLE PACKAGE_BUILD_DATE)
 
 SET(CMAKE_MAN_DIR "share/man" CACHE STRING
   "Install location for man pages (relative to prefix).")
