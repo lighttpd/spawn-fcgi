@@ -378,6 +378,7 @@ static void show_help () {
 "\n" \
 "Options:\n" \
 " -f <path>    filename of the fcgi-application (ignored if <fcgiapp> is given)\n" \
+" -d <dir>     chdir to directory before spawning\n" \
 " -a <addr>    bind to ip address\n" \
 " -p <port>    bind to tcp-port\n" \
 " -s <path>    bind to unix-domain socket\n" \
@@ -404,7 +405,7 @@ static void show_help () {
 int main(int argc, char **argv) {
 	char *fcgi_app = NULL, *changeroot = NULL, *username = NULL,
 	     *groupname = NULL, *unixsocket = NULL, *pid_file = NULL,
-	     *sockusername = NULL, *sockgroupname = NULL,
+	     *sockusername = NULL, *sockgroupname = NULL, *fcgi_dir = NULL,
 	     *addr = NULL;
 	char **fcgi_app_argv = { NULL };
 	unsigned short port = 0;
@@ -425,9 +426,10 @@ int main(int argc, char **argv) {
 
 	i_am_root = (getuid() == 0);
 
-	while (-1 != (o = getopt(argc, argv, "c:f:g:?hna:p:u:vC:F:s:P:U:G:M:S"))) {
+	while (-1 != (o = getopt(argc, argv, "c:d:f:g:?hna:p:u:vC:F:s:P:U:G:M:S"))) {
 		switch(o) {
 		case 'f': fcgi_app = optarg; break;
+		case 'd': fcgi_dir = optarg; break;
 		case 'a': addr = optarg;/* ip addr */ break;
 		case 'p': port = strtol(optarg, NULL, 10);/* port */ break;
 		case 'C': child_count = strtol(optarg, NULL, 10);/*  */ break;
@@ -543,11 +545,11 @@ int main(int argc, char **argv) {
 
 		if (changeroot) {
 			if (-1 == chroot(changeroot)) {
-				fprintf(stderr, "spawn-fcgi: chroot failed: %s\n", strerror(errno));
+				fprintf(stderr, "spawn-fcgi: chroot('%s') failed: %s\n", changeroot, strerror(errno));
 				return -1;
 			}
 			if (-1 == chdir("/")) {
-				fprintf(stderr, "spawn-fcgi: chdir failed: %s\n", strerror(errno));
+				fprintf(stderr, "spawn-fcgi: chdir('/') failed: %s\n", strerror(errno));
 				return -1;
 			}
 		}
@@ -562,6 +564,11 @@ int main(int argc, char **argv) {
 	} else {
 		if (-1 == (fcgi_fd = bind_socket(addr, port, unixsocket, 0, 0, sockmode)))
 			return -1;
+	}
+
+	if (fcgi_dir && -1 == chdir(fcgi_dir)) {
+		fprintf(stderr, "spawn-fcgi: chdir('%s') failed: %s\n", fcgi_dir, strerror(errno));
+		return -1;
 	}
 
 	return fcgi_spawn_connection(fcgi_app, fcgi_app_argv, fcgi_fd, fork_count, child_count, pid_fd, nofork);
