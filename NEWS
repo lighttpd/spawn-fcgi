@@ -8,6 +8,7 @@ NEWS
   * Add build date to show-version
   * Added options to chown/chmod the socket and to create the socket before chroot() (fixes #1906)
   * Updated man page
+  * Add proper SUID bit detection
   * Added option to change the directory before spawning (fixes #1847)
 
 - 1.6.0 - 2009-02-28
