@@ -59,6 +59,12 @@
 typedef int socklen_t;
 #endif
 
+#ifndef HAVE_ISSETUGID
+static int issetugid() {
+	return (geteuid() != getuid() || getegid() != getgid());
+}
+#endif
+
 static int bind_socket(const char *addr, unsigned short port, const char *unixsocket, uid_t uid, gid_t gid, int mode) {
 	int fcgi_fd, socket_type, val;
 
@@ -467,9 +473,8 @@ int main(int argc, char **argv) {
 		return -1;
 	}
 
-	/* UID handling */
-	if (!i_am_root && (geteuid() == 0 || getegid() == 0)) {
-		/* we are setuid-root */
+	/* SUID handling */
+	if (!i_am_root && issetugid()) {
 		fprintf(stderr, "spawn-fcgi: Are you nuts ? Don't apply a SUID bit to this binary\n");
 		return -1;
 	}

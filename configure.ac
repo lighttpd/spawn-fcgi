@@ -25,17 +25,19 @@ AC_CHECK_HEADERS([arpa/inet.h errno.h fcntl.h getopt.h grp.h netdb.h \
 
 # Checks for typedefs, structures, and compiler characteristics.
 AC_C_CONST
+AC_TYPE_UID_T
 AC_TYPE_PID_T
 AC_HEADER_TIME
 AC_CHECK_TYPES(socklen_t,,,[#include <sys/types.h>
 #include <sys/socket.h>])
 
 # Checks for library functions.
+AC_FUNC_CHOWN
 AC_FUNC_FORK
 AC_FUNC_MALLOC
 AC_FUNC_SELECT_ARGTYPES
 AC_FUNC_STAT
-AC_CHECK_FUNCS([dup2 memset putenv select socket strerror strtol])
+AC_CHECK_FUNCS([dup2 memset putenv select socket strerror strtol issetugid])
 
 # check for extra compiler options (warning options)
 if test "${GCC}" = "yes"; then

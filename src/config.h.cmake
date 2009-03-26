@@ -30,3 +30,5 @@
 #cmakedefine HAVE_UNISTD_H
 #cmakedefine HAVE_WINSOCK
 #cmakedefine HAVE_SOCKLEN_T
+
+#cmakedefine HAVE_ISSETUGID
