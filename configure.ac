@@ -37,7 +37,31 @@ AC_FUNC_FORK
 AC_FUNC_MALLOC
 AC_FUNC_SELECT_ARGTYPES
 AC_FUNC_STAT
-AC_CHECK_FUNCS([dup2 memset putenv select socket strerror strtol issetugid])
+AC_CHECK_FUNCS([dup2 memset putenv select socket strerror strtol issetugid inet_pton])
+
+
+dnl Check for IPv6 support
+
+AC_ARG_ENABLE(ipv6,
+ AC_HELP_STRING([--disable-ipv6],[disable IPv6 support]),
+ [case "${enableval}" in
+   yes) ipv6=true ;;
+    no) ipv6=false ;;
+     *) AC_MSG_ERROR(bad value ${enableval} for --enable-ipv6) ;;
+  esac],[ipv6=true])
+
+if test x$ipv6 = xtrue; then
+  AC_CACHE_CHECK([for IPv6 support], ac_cv_ipv6_support,
+  [AC_TRY_LINK([ #include <sys/types.h>
+#include <sys/socket.h>
+#include <netinet/in.h>], [struct sockaddr_in6 s; struct in6_addr t=in6addr_any; int i=AF_INET6; s; t.s6_addr[0] = 0; ],
+  [ac_cv_ipv6_support=yes], [ac_cv_ipv6_support=no])])
+
+  if test "$ac_cv_ipv6_support" = yes; then
+    AC_DEFINE(HAVE_IPV6,1,[Whether to enable IPv6 support])
+  fi
+fi
+
 
 # check for extra compiler options (warning options)
 if test "${GCC}" = "yes"; then

@@ -40,6 +40,17 @@ CHECK_INCLUDE_FILES(unistd.h HAVE_UNISTD_H)
 CHECK_INCLUDE_FILES(winsock2.h HAVE_WINSOCK2_H)
 
 CHECK_FUNCTION_EXISTS(issetugid HAVE_ISSETUGID)
+CHECK_FUNCTION_EXISTS(inet_pton HAVE_INET_PTON)
+
+CHECK_C_SOURCE_COMPILES("
+	#include <sys/types.h>
+	#include <sys/socket.h>
+	#include <netinet/in.h>
+	
+	int main() {
+		struct sockaddr_in6 s; struct in6_addr t=in6addr_any; int i=AF_INET6; s; t.s6_addr[0] = 0;
+		return 0;
+	}" HAVE_IPV6)
 
 SET(CMAKE_EXTRA_INCLUDE_FILES sys/socket.h)
 CHECK_TYPE_SIZE(socklen_t HAVE_SOCKLEN_T)

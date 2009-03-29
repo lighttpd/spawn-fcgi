@@ -65,11 +65,18 @@ static int issetugid() {
 }
 #endif
 
+#if defined(HAVE_IPV6) && defined(HAVE_INET_PTON)
+# define USE_IPV6
+#endif
+
 static int bind_socket(const char *addr, unsigned short port, const char *unixsocket, uid_t uid, gid_t gid, int mode) {
 	int fcgi_fd, socket_type, val;
 
 	struct sockaddr_un fcgi_addr_un;
 	struct sockaddr_in fcgi_addr_in;
+#ifdef USE_IPV6
+	struct sockaddr_in6 fcgi_addr_in6;
+#endif
 	struct sockaddr *fcgi_addr;
 
 	socklen_t servlen;
@@ -118,16 +125,40 @@ static int bind_socket(const char *addr, unsigned short port, const char *unixso
 	} else {
 		memset(&fcgi_addr_in, 0, sizeof(fcgi_addr_in));
 		fcgi_addr_in.sin_family = AF_INET;
-		if (addr != NULL) {
-			fcgi_addr_in.sin_addr.s_addr = inet_addr(addr);
-		} else {
-			fcgi_addr_in.sin_addr.s_addr = htonl(INADDR_ANY);
-		}
 		fcgi_addr_in.sin_port = htons(port);
-		servlen = sizeof(fcgi_addr_in);
 
+		servlen = sizeof(fcgi_addr_in);
 		socket_type = AF_INET;
 		fcgi_addr = (struct sockaddr *) &fcgi_addr_in;
+
+#ifdef USE_IPV6
+		memset(&fcgi_addr_in6, 0, sizeof(fcgi_addr_in6));
+		fcgi_addr_in6.sin6_family = AF_INET6;
+		fcgi_addr_in6.sin6_port = fcgi_addr_in.sin_port;
+#endif
+
+		if (addr == NULL) {
+			fcgi_addr_in.sin_addr.s_addr = htonl(INADDR_ANY);
+#ifdef HAVE_INET_PTON
+		} else if (1 == inet_pton(AF_INET, addr, &fcgi_addr_in.sin_addr)) {
+			/* nothing to do */
+#ifdef HAVE_IPV6
+		} else if (1 == inet_pton(AF_INET6, addr, &fcgi_addr_in6.sin6_addr)) {
+			servlen = sizeof(fcgi_addr_in6);
+			socket_type = AF_INET6;
+			fcgi_addr = (struct sockaddr *) &fcgi_addr_in6;
+#endif
+		} else {
+			fprintf(stderr, "spawn-fcgi: '%s' is not a valid IP address\n", addr);
+			return -1;
+#else
+		} else {
+			if ((in_addr_t)(-1) == (fcgi_addr_in.sin_addr.s_addr = inet_addr(addr))) {
+				fprintf(stderr, "spawn-fcgi: '%s' is not a valid IPv4 address\n", addr);
+				return -1;
+			}
+#endif
+		}
 	}
 
 
@@ -379,7 +410,7 @@ static void show_help () {
 "Options:\n" \
 " -f <path>      filename of the fcgi-application (ignored if <fcgiapp> is given)\n" \
 " -d <directory> chdir to directory before spawning\n" \
-" -a <address>   bind to IP address\n" \
+" -a <address>   bind to IPv4/IPv6 address (defaults to 0.0.0.0)\n" \
 " -p <port>      bind to TCP-port\n" \
 " -s <path>      bind to Unix domain socket\n" \
 " -M <mode>      change Unix domain socket mode\n" \

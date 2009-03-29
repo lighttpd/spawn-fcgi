@@ -32,3 +32,6 @@
 #cmakedefine HAVE_SOCKLEN_T
 
 #cmakedefine HAVE_ISSETUGID
+#cmakedefine HAVE_INET_PTON
+
+#cmakedefine HAVE_IPV6
