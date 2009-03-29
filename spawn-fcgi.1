@@ -19,20 +19,20 @@ spawn-fcgi \- Spawns FastCGI processes
 .
 \fIspawn-fcgi\fP is used to spawn remote and local FastCGI processes.
 .P
-While it is obviously needed to spawn remote FastCGI backends (the webserver
-can only spawnn local ones), it is recommended to spawn local backends
+While it is obviously needed to spawn remote FastCGI backends (the web server
+can only spawn local ones), it is recommended to spawn local backends
 with spawn-fcgi, too.
 .P
 Reasons why you may want to use spawn-fcgi instead of something else:
 .IP * 3
 Privilege separation without needing a suid-binary or running a server as root.
 .IP * 3
-You can restart your webserver and the FastCGI applications without restarting the others.
+You can restart your web server and the FastCGI applications without restarting the others.
 .IP * 3
 You can run them in different chroot()s.
 .IP * 3
-Running your FastCGI applications doesn't depend on the webserver you are running,
-which allows for easier testing of other webservers.
+Running your FastCGI applications doesn't depend on the web server you are running,
+which allows for easier testing of other web servers.
 .
 .SH OPTIONS
 .
@@ -41,25 +41,27 @@ which allows for easier testing of other webservers.
 .B  \-f <path>
 Filename of the FastCGI application to spawn. This option is deprecated and it
 is recommend to always specify the application (absolute path) and its parameters after "--";
+the fcgiapp parameter is directly used for the exec() call, while for starting the binary given
+with \-f /bin/sh is needed (which may not be available in a chroot).
 .IP
 This option is ignored if fcgiapp is given.
 .TP 8
 .B  \-d <path>
 Change the current directory before spawning the application.
 .TP 8
-.B  \-a <addr>
+.B  \-a <address>
 IP address to bind to; only used if \-p is given too.
 .TP 8
 .B  \-p <port>
 TCP port to bind to; you cannot combine this with the \-s option.
 .TP 8
 .B  \-s <path>
-Path to the Unix-domain socket to bind to; you cannot combine this with the \-p option.
+Path to the Unix domain socket to bind to; you cannot combine this with the \-p option.
 .TP 8
 .B  \-C <children>
 (PHP only) Number of children to spawn by setting the PHP_FCGI_CHILDREN
 environment variable. Default is not to overwrite the environment variable;
-php will spawn no childs if the var is not set (same as setting it to 0).
+php will spawn no children if the variable is not set (same as setting it to 0).
 .TP 8
 .B  \-F <children>
 Number of children to fork, defaults to 1. This option doesn't work with \-n,
@@ -74,7 +76,7 @@ Name of the PID file for spawned processes (ignored in no-fork mode)
 No forking should take place (for daemontools)
 .TP 8
 .B  \-M <mode>
-Change file mode of the unix socket; only used if \-s is given too.
+Change file mode of the Unix domain socket; only used if \-s is given too.
 .TP 8
 .B  \-?, \-h
 General usage instructions
@@ -85,11 +87,11 @@ Shows version information and exits
 .
 The following options are only available if you invoke spawn-fcgi as root:
 .TP 8
-.B  \-c <dir>
-Chroot to specified directory; the unix socket is created inside the chroot unless \-S is given.
+.B  \-c <directory>
+Chroot to specified directory; the Unix domain socket is created inside the chroot unless \-S is given.
 .TP 8
 .B  \-S
-Create unix socket before chroot()ing.
+Create Unix domain socket before chroot().
 .TP 8
 .B  \-u
 User ID to change to.
@@ -98,10 +100,10 @@ User ID to change to.
 Group ID to change to. Defaults to primary group of the user given for \-u.
 .TP 8
 .B  \-U
-Change user of the unix socket, defaults to the value of \-u. (only used if \-s is given)
+Change user of the Unix domain socket, defaults to the value of \-u. (only used if \-s is given)
 .TP 8
 .B  \-G
-Change group of the unix socket, defaults to the primary group of the user given for \-U;
+Change group of the Unix domain socket, defaults to the primary group of the user given for \-U;
 if \-U wasn't given, defaults to the value of \-g. (only used if \-s is given)
 .
 .SH "SEE ALSO"

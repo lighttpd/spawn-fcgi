@@ -316,7 +316,7 @@ static int find_user_group(const char *user, const char *group, uid_t *uid, gid_
 
 		if (my_uid <= 0) {
 			if (NULL == (my_pwd = getpwnam(user))) {
-				fprintf(stderr, "spawn-fcgi: can't find username %s\n", user);
+				fprintf(stderr, "spawn-fcgi: can't find user name %s\n", user);
 				return -1;
 			}
 			my_uid = my_pwd->pw_uid;
@@ -338,7 +338,7 @@ static int find_user_group(const char *user, const char *group, uid_t *uid, gid_
 
 		if (my_gid <= 0) {
 			if (NULL == (my_grp = getgrnam(group))) {
-				fprintf(stderr, "spawn-fcgi: can't find groupname %s\n", group);
+				fprintf(stderr, "spawn-fcgi: can't find group name %s\n", group);
 				return -1;
 			}
 			my_gid = my_grp->gr_gid;
@@ -362,9 +362,9 @@ static int find_user_group(const char *user, const char *group, uid_t *uid, gid_
 	return 0;
 }
 
+#define PACKAGE_DESC "spawn-fcgi v" PACKAGE_VERSION " - spawns FastCGI processes\n"
 static void show_version () {
-	const char *b = PACKAGE_NAME "-" PACKAGE_VERSION \
-" - spawns fastcgi processes\n"
+	const char *b = PACKAGE_DESC
 "Build-Date: " __DATE__ " " __TIME__ "\n";
 ;
 	write(1, b, strlen(b));
@@ -374,29 +374,29 @@ static void show_help () {
 	char *b = \
 "Usage: spawn-fcgi [options] [-- <fcgiapp> [fcgi app arguments]]\n" \
 "\n" \
-"spawn-fcgi v" PACKAGE_VERSION " - spawns fastcgi processes\n" \
+"spawn-fcgi v" PACKAGE_VERSION " - spawns FastCGI processes\n" \
 "\n" \
 "Options:\n" \
-" -f <path>    filename of the fcgi-application (ignored if <fcgiapp> is given)\n" \
-" -d <dir>     chdir to directory before spawning\n" \
-" -a <addr>    bind to ip address\n" \
-" -p <port>    bind to tcp-port\n" \
-" -s <path>    bind to unix-domain socket\n" \
-" -M <mode>    change unix-domain socket mode\n" \
-" -C <childs>  (PHP only) numbers of childs to spawn (default: not setting\n" \
-"              the PHP_FCGI_CHILDREN env var - php defaults to 0)\n" \
-" -F <childs>  numbers of childs to fork (default 1)\n" \
-" -P <path>    name of PID-file for spawned process (ignored in no-fork mode)\n" \
-" -n           no fork (for daemontools)\n" \
-" -v           show version\n" \
-" -?, -h       show this help\n" \
+" -f <path>      filename of the fcgi-application (ignored if <fcgiapp> is given)\n" \
+" -d <directory> chdir to directory before spawning\n" \
+" -a <address>   bind to IP address\n" \
+" -p <port>      bind to TCP-port\n" \
+" -s <path>      bind to Unix domain socket\n" \
+" -M <mode>      change Unix domain socket mode\n" \
+" -C <children>  (PHP only) numbers of childs to spawn (default: not setting\n" \
+"                the PHP_FCGI_CHILDREN environment variable - PHP defaults to 0)\n" \
+" -F <children>  number of children to fork (default 1)\n" \
+" -P <path>      name of PID-file for spawned process (ignored in no-fork mode)\n" \
+" -n             no fork (for daemontools)\n" \
+" -v             show version\n" \
+" -?, -h         show this help\n" \
 "(root only)\n" \
-" -c <dir>     chroot to directory\n" \
-" -S           create socket before chroot()ing (default is to create the socket in the chroot)\n" \
-" -u <user>    change to user-id\n" \
-" -g <group>   change to group-id (default: primary group of user if -u is given)\n" \
-" -U <user>    change unix-domain socket owner to user-id\n" \
-" -G <group>   change unix-domain socket group to group-id\n" \
+" -c <directory> chroot to directory\n" \
+" -S             create socket before chroot() (default is to create the socket in the chroot)\n" \
+" -u <user>      change to user-id\n" \
+" -g <group>     change to group-id (default: primary group of user if -u is given)\n" \
+" -U <user>      change Unix domain socket owner to user-id\n" \
+" -G <group>     change Unix domain socket group to group-id\n" \
 ;
 	write(1, b, strlen(b));
 }
@@ -458,7 +458,7 @@ int main(int argc, char **argv) {
 	}
 
 	if (NULL == fcgi_app && NULL == fcgi_app_argv) {
-		fprintf(stderr, "spawn-fcgi: no fastcgi application given\n");
+		fprintf(stderr, "spawn-fcgi: no FastCGI application given\n");
 		return -1;
 	}
 
@@ -466,18 +466,18 @@ int main(int argc, char **argv) {
 		fprintf(stderr, "spawn-fcgi: no socket given (use either -p or -s)\n");
 		return -1;
 	} else if (0 != port && NULL != unixsocket) {
-		fprintf(stderr, "spawn-fcgi: either a unix domain socket or a tcp-port, but not both\n");
+		fprintf(stderr, "spawn-fcgi: either a Unix domain socket or a TCP-port, but not both\n");
 		return -1;
 	}
 
 	if (unixsocket && strlen(unixsocket) > sizeof(un.sun_path) - 1) {
-		fprintf(stderr, "spawn-fcgi: path of the unix socket is too long\n");
+		fprintf(stderr, "spawn-fcgi: path of the Unix domain socket is too long\n");
 		return -1;
 	}
 
 	/* SUID handling */
 	if (!i_am_root && issetugid()) {
-		fprintf(stderr, "spawn-fcgi: Are you nuts ? Don't apply a SUID bit to this binary\n");
+		fprintf(stderr, "spawn-fcgi: Are you nuts? Don't apply a SUID bit to this binary\n");
 		return -1;
 	}
 
@@ -487,7 +487,7 @@ int main(int argc, char **argv) {
 	    (-1 == (pid_fd = open(pid_file, O_WRONLY | O_CREAT | O_EXCL | O_TRUNC, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH)))) {
 		struct stat st;
 		if (errno != EEXIST) {
-			fprintf(stderr, "spawn-fcgi: opening pid-file '%s' failed: %s\n",
+			fprintf(stderr, "spawn-fcgi: opening PID-file '%s' failed: %s\n",
 				pid_file, strerror(errno));
 			return -1;
 		}
@@ -495,7 +495,7 @@ int main(int argc, char **argv) {
 		/* ok, file exists */
 
 		if (0 != stat(pid_file, &st)) {
-			fprintf(stderr, "spawn-fcgi: stating pid-file '%s' failed: %s\n",
+			fprintf(stderr, "spawn-fcgi: stating PID-file '%s' failed: %s\n",
 				pid_file, strerror(errno));
 			return -1;
 		}
@@ -503,13 +503,13 @@ int main(int argc, char **argv) {
 		/* is it a regular file ? */
 
 		if (!S_ISREG(st.st_mode)) {
-			fprintf(stderr, "spawn-fcgi: pid-file exists and isn't regular file: '%s'\n",
+			fprintf(stderr, "spawn-fcgi: PID-file exists and isn't regular file: '%s'\n",
 				pid_file);
 			return -1;
 		}
 
 		if (-1 == (pid_fd = open(pid_file, O_WRONLY | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH))) {
-			fprintf(stderr, "spawn-fcgi: opening pid-file '%s' failed: %s\n",
+			fprintf(stderr, "spawn-fcgi: opening PID-file '%s' failed: %s\n",
 				pid_file, strerror(errno));
 			return -1;
 		}
