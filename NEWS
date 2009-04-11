@@ -6,6 +6,7 @@ NEWS
 - 1.6.2 -
   * Add homepage to README
   * Add IPv6 support
+  * Fix problems with usernames starting with a digit and not existing uids; add warning if only user privs are dropped. (fixes #1959)
 
 - 1.6.1 - 2009-03-29
 
