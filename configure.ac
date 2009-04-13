@@ -31,6 +31,10 @@ AC_HEADER_TIME
 AC_CHECK_TYPES(socklen_t,,,[#include <sys/types.h>
 #include <sys/socket.h>])
 
+## solaris needs -lsocket -lnsl
+AC_SEARCH_LIBS([socket],[socket])
+AC_SEARCH_LIBS([inet_addr],[nsl socket])
+
 # Checks for library functions.
 AC_FUNC_CHOWN
 AC_FUNC_FORK
@@ -40,7 +44,7 @@ AC_FUNC_STAT
 AC_CHECK_FUNCS([dup2 memset putenv select socket strerror strtol issetugid inet_pton])
 
 
-dnl Check for IPv6 support
+# Check for IPv6 support
 
 AC_ARG_ENABLE(ipv6,
  AC_HELP_STRING([--disable-ipv6],[disable IPv6 support]),
