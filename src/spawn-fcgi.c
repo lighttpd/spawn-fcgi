@@ -69,6 +69,15 @@ static int issetugid() {
 # define USE_IPV6
 #endif
 
+#ifdef USE_IPV6
+#define PACKAGE_FEATURES " (ipv6)"
+#else
+#define PACKAGE_FEATURES ""
+#endif
+
+#define PACKAGE_DESC "spawn-fcgi v" PACKAGE_VERSION PACKAGE_FEATURES " - spawns FastCGI processes\n"
+
+
 static int bind_socket(const char *addr, unsigned short port, const char *unixsocket, uid_t uid, gid_t gid, int mode) {
 	int fcgi_fd, socket_type, val;
 
@@ -394,7 +403,6 @@ static int find_user_group(const char *user, const char *group, uid_t *uid, gid_
 	return 0;
 }
 
-#define PACKAGE_DESC "spawn-fcgi v" PACKAGE_VERSION " - spawns FastCGI processes\n"
 static void show_version () {
 	const char *b = PACKAGE_DESC
 "Build-Date: " __DATE__ " " __TIME__ "\n";
@@ -406,7 +414,7 @@ static void show_help () {
 	char *b = \
 "Usage: spawn-fcgi [options] [-- <fcgiapp> [fcgi app arguments]]\n" \
 "\n" \
-"spawn-fcgi v" PACKAGE_VERSION " - spawns FastCGI processes\n" \
+PACKAGE_DESC \
 "\n" \
 "Options:\n" \
 " -f <path>      filename of the fcgi-application (ignored if <fcgiapp> is given)\n" \

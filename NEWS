@@ -8,6 +8,7 @@ NEWS
   * Add IPv6 support
   * Fix problems with usernames starting with a digit and not existing uids; add warning if only user privs are dropped. (fixes #1959)
   * Add check to link against socket/nsl if needed (fixes #1960)
+  * List IPv6 as feature after the version if it is supported
 
 - 1.6.1 - 2009-03-29
 
