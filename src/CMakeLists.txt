@@ -9,8 +9,8 @@ IF(CMAKE_COMPILER_IS_GNUCC)
 	OPTION(BUILD_EXTRA_WARNINGS "extra warnings")
 
 	IF(BUILD_EXTRA_WARNINGS)
-		SET(WARN_FLAGS "-g -O2 -g2 -Wall -Wmissing-declarations -Wdeclaration-after-statement -Wno-pointer-sign -Wcast-align -Winline -Wsign-compare -Wnested-externs -Wpointer-arith -Wl,--as-needed -Wformat-security")
-		# -Werror -Wbad-function-cast -Wmissing-prototypes
+		SET(WARN_FLAGS "-g -O2 -g2 -Wall -Wmissing-declarations -Wdeclaration-after-statement -Wcast-align -Winline -Wsign-compare -Wnested-externs -Wpointer-arith -Wl,--as-needed -Wformat-security")
+		# -Wno-pointer-sign -Werror -Wbad-function-cast -Wmissing-prototypes
 	ELSE(BUILD_EXTRA_WARNINGS)
 		SET(WARN_FLAGS "")
 	ENDIF(BUILD_EXTRA_WARNINGS)
