@@ -5,6 +5,7 @@ NEWS
 
 - 1.6.3 -
   * Fix unix socket mode change to work without specifying user/group for socket
+  * Add some ./run script examples for use with daemontools or runit
 
 - 1.6.2 - 2009-04-18
   * Add homepage to README
