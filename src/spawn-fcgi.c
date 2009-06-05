@@ -77,6 +77,7 @@ static int issetugid() {
 
 #define PACKAGE_DESC "spawn-fcgi v" PACKAGE_VERSION PACKAGE_FEATURES " - spawns FastCGI processes\n"
 
+#define CONST_STR_LEN(s) s, sizeof(s) - 1
 
 static int bind_socket(const char *addr, unsigned short port, const char *unixsocket, uid_t uid, gid_t gid, int mode) {
 	int fcgi_fd, socket_type, val;
@@ -271,7 +272,7 @@ static int fcgi_spawn_connection(char *appPath, char **appArgv, int fcgi_fd, int
 				execv(appArgv[0], appArgv);
 
 			} else {
-				char *b = malloc(strlen("exec ") + strlen(appPath) + 1);
+				char *b = malloc((sizeof("exec ") - 1) + strlen(appPath) + 1);
 				strcpy(b, "exec ");
 				strcat(b, appPath);
 
@@ -404,41 +405,40 @@ static int find_user_group(const char *user, const char *group, uid_t *uid, gid_
 }
 
 static void show_version () {
-	const char *b = PACKAGE_DESC
-"Build-Date: " __DATE__ " " __TIME__ "\n";
-;
-	write(1, b, strlen(b));
+	write(1, CONST_STR_LEN(
+		PACKAGE_DESC \
+		"Build-Date: " __DATE__ " " __TIME__ "\n"
+	));
 }
 
 static void show_help () {
-	char *b = \
-"Usage: spawn-fcgi [options] [-- <fcgiapp> [fcgi app arguments]]\n" \
-"\n" \
-PACKAGE_DESC \
-"\n" \
-"Options:\n" \
-" -f <path>      filename of the fcgi-application (ignored if <fcgiapp> is given)\n" \
-" -d <directory> chdir to directory before spawning\n" \
-" -a <address>   bind to IPv4/IPv6 address (defaults to 0.0.0.0)\n" \
-" -p <port>      bind to TCP-port\n" \
-" -s <path>      bind to Unix domain socket\n" \
-" -M <mode>      change Unix domain socket mode\n" \
-" -C <children>  (PHP only) numbers of childs to spawn (default: not setting\n" \
-"                the PHP_FCGI_CHILDREN environment variable - PHP defaults to 0)\n" \
-" -F <children>  number of children to fork (default 1)\n" \
-" -P <path>      name of PID-file for spawned process (ignored in no-fork mode)\n" \
-" -n             no fork (for daemontools)\n" \
-" -v             show version\n" \
-" -?, -h         show this help\n" \
-"(root only)\n" \
-" -c <directory> chroot to directory\n" \
-" -S             create socket before chroot() (default is to create the socket in the chroot)\n" \
-" -u <user>      change to user-id\n" \
-" -g <group>     change to group-id (default: primary group of user if -u is given)\n" \
-" -U <user>      change Unix domain socket owner to user-id\n" \
-" -G <group>     change Unix domain socket group to group-id\n" \
-;
-	write(1, b, strlen(b));
+	write(1, CONST_STR_LEN(
+		"Usage: spawn-fcgi [options] [-- <fcgiapp> [fcgi app arguments]]\n" \
+		"\n" \
+		PACKAGE_DESC \
+		"\n" \
+		"Options:\n" \
+		" -f <path>      filename of the fcgi-application (ignored if <fcgiapp> is given)\n" \
+		" -d <directory> chdir to directory before spawning\n" \
+		" -a <address>   bind to IPv4/IPv6 address (defaults to 0.0.0.0)\n" \
+		" -p <port>      bind to TCP-port\n" \
+		" -s <path>      bind to Unix domain socket\n" \
+		" -M <mode>      change Unix domain socket mode\n" \
+		" -C <children>  (PHP only) numbers of childs to spawn (default: not setting\n" \
+		"                the PHP_FCGI_CHILDREN environment variable - PHP defaults to 0)\n" \
+		" -F <children>  number of children to fork (default 1)\n" \
+		" -P <path>      name of PID-file for spawned process (ignored in no-fork mode)\n" \
+		" -n             no fork (for daemontools)\n" \
+		" -v             show version\n" \
+		" -?, -h         show this help\n" \
+		"(root only)\n" \
+		" -c <directory> chroot to directory\n" \
+		" -S             create socket before chroot() (default is to create the socket in the chroot)\n" \
+		" -u <user>      change to user-id\n" \
+		" -g <group>     change to group-id (default: primary group of user if -u is given)\n" \
+		" -U <user>      change Unix domain socket owner to user-id\n" \
+		" -G <group>     change Unix domain socket group to group-id\n" \
+	));
 }
 
 
