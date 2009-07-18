@@ -200,7 +200,7 @@ static int bind_socket(const char *addr, unsigned short port, const char *unixso
 			}
 		}
 
-		if (-1 == chmod(unixsocket, mode)) {
+		if (-1 != mode && -1 == chmod(unixsocket, mode)) {
 			fprintf(stderr, "spawn-fcgi: couldn't chmod socket: %s\n", strerror(errno));
 			close(fcgi_fd);
 			unlink(unixsocket);
