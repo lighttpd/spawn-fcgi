@@ -8,6 +8,7 @@ NEWS
   * Add some ./run script examples for use with daemontools or runit
   * Fix Invalid Argument in chmod if mode=-1 (fixes 2033)
   * Add deprecated and /bin/sh info for -f option; wrap syntax output (fixes #2044)
+  * Add run script examples in automake dist build
 
 - 1.6.2 - 2009-04-18
   * Add homepage to README
