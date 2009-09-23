@@ -337,7 +337,6 @@ static int fcgi_spawn_connection(char *appPath, char **appArgv, int fcgi_fd, int
 		}
 	}
 	close(pid_fd);
-	pid_fd = -1;
 
 	close(fcgi_fd);
 
@@ -418,7 +417,8 @@ static void show_help () {
 		PACKAGE_DESC \
 		"\n" \
 		"Options:\n" \
-		" -f <path>      filename of the fcgi-application (ignored if <fcgiapp> is given)\n" \
+		" -f <path>      filename of the fcgi-application (deprecated; ignored if\n" \
+		"                <fcgiapp> is given; needs /bin/sh)\n" \
 		" -d <directory> chdir to directory before spawning\n" \
 		" -a <address>   bind to IPv4/IPv6 address (defaults to 0.0.0.0)\n" \
 		" -p <port>      bind to TCP-port\n" \
@@ -433,9 +433,11 @@ static void show_help () {
 		" -?, -h         show this help\n" \
 		"(root only)\n" \
 		" -c <directory> chroot to directory\n" \
-		" -S             create socket before chroot() (default is to create the socket in the chroot)\n" \
+		" -S             create socket before chroot() (default is to create the socket\n" \
+		"                in the chroot)\n" \
 		" -u <user>      change to user-id\n" \
-		" -g <group>     change to group-id (default: primary group of user if -u is given)\n" \
+		" -g <group>     change to group-id (default: primary group of user if -u\n" \
+		"                is given)\n" \
 		" -U <user>      change Unix domain socket owner to user-id\n" \
 		" -G <group>     change Unix domain socket group to group-id\n" \
 	));
