@@ -489,7 +489,7 @@ int main(int argc, char **argv) {
 		case 'U': if (i_am_root) { sockusername = optarg; } /* set socket user */ break;
 		case 'G': if (i_am_root) { sockgroupname = optarg; } /* set socket group */ break;
 		case 'S': if (i_am_root) { sockbeforechroot = 1; } /* open socket before chroot() */ break;
-		case 'M': sockmode = strtol(optarg, NULL, 0); /* set socket mode */ break;
+		case 'M': sockmode = strtol(optarg, NULL, 8); /* set socket mode */ break;
 		case 'n': nofork = 1; break;
 		case 'P': pid_file = optarg; /* PID file */ break;
 		case 'v': show_version(); return 0;
