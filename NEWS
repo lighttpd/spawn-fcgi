@@ -5,11 +5,12 @@ NEWS
 
 - 1.6.4 -
   * Use octal mode for -M (patch by dfjoerg)
+  * Add -b backlog option (fixes #2422, patch by aschmitz)
 
 - 1.6.3 - 2009-09-23
   * Fix unix socket mode change to work without specifying user/group for socket
   * Add some ./run script examples for use with daemontools or runit
-  * Fix Invalid Argument in chmod if mode=-1 (fixes 2033)
+  * Fix Invalid Argument in chmod if mode=-1 (fixes #2033)
   * Add deprecated and /bin/sh info for -f option; wrap syntax output (fixes #2044)
   * Add run script examples in automake dist build
 

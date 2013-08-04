@@ -1,4 +1,4 @@
-.TH spawn-fcgi 1 "26 March 2009"
+.TH spawn-fcgi 1 "21 November 2012"
 .
 .SH NAME
 .
@@ -68,6 +68,12 @@ Number of children to fork, defaults to 1. This option doesn't work with \-n,
 have a look at
 .BR multiwatch(1)
 if you want to supervise multiple forks on the same socket.
+.TP 8
+.B  \-b <backlog>
+backlog to allow on the socket (default 1024). This is usually limited by the kernel too,
+check sysctl net.core.somaxconn (default 128) for linux.
+.IP
+backlog is the queue of connections that the kernel accepts before the userspace application sees them.
 .TP 8
 .B  \-P <path>
 Name of the PID file for spawned processes (ignored in no-fork mode)

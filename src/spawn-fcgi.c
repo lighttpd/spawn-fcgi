@@ -79,7 +79,7 @@ static int issetugid() {
 
 #define CONST_STR_LEN(s) s, sizeof(s) - 1
 
-static int bind_socket(const char *addr, unsigned short port, const char *unixsocket, uid_t uid, gid_t gid, int mode) {
+static int bind_socket(const char *addr, unsigned short port, const char *unixsocket, uid_t uid, gid_t gid, int mode, int backlog) {
 	int fcgi_fd, socket_type, val;
 
 	struct sockaddr_un fcgi_addr_un;
@@ -208,7 +208,7 @@ static int bind_socket(const char *addr, unsigned short port, const char *unixso
 		}
 	}
 
-	if (-1 == listen(fcgi_fd, 1024)) {
+	if (-1 == listen(fcgi_fd, backlog)) {
 		fprintf(stderr, "spawn-fcgi: listen failed: %s\n", strerror(errno));
 		return -1;
 	}
@@ -427,6 +427,7 @@ static void show_help () {
 		" -C <children>  (PHP only) numbers of childs to spawn (default: not setting\n" \
 		"                the PHP_FCGI_CHILDREN environment variable - PHP defaults to 0)\n" \
 		" -F <children>  number of children to fork (default 1)\n" \
+		" -b <backlog>   backlog to allow on the socket (default 1024)\n" \
 		" -P <path>      name of PID-file for spawned process (ignored in no-fork mode)\n" \
 		" -n             no fork (for daemontools)\n" \
 		" -v             show version\n" \
@@ -455,6 +456,7 @@ int main(int argc, char **argv) {
 	int sockmode = -1;
 	int child_count = -1;
 	int fork_count = 1;
+	int backlog = 1024;
 	int i_am_root, o;
 	int pid_fd = -1;
 	int nofork = 0;
@@ -469,7 +471,7 @@ int main(int argc, char **argv) {
 
 	i_am_root = (getuid() == 0);
 
-	while (-1 != (o = getopt(argc, argv, "c:d:f:g:?hna:p:u:vC:F:s:P:U:G:M:S"))) {
+	while (-1 != (o = getopt(argc, argv, "c:d:f:g:?hna:p:b:u:vC:F:s:P:U:G:M:S"))) {
 		switch(o) {
 		case 'f': fcgi_app = optarg; break;
 		case 'd': fcgi_dir = optarg; break;
@@ -482,6 +484,7 @@ int main(int argc, char **argv) {
 			break;
 		case 'C': child_count = strtol(optarg, NULL, 10);/*  */ break;
 		case 'F': fork_count = strtol(optarg, NULL, 10);/*  */ break;
+		case 'b': backlog = strtol(optarg, NULL, 10);/*  */ break;
 		case 's': unixsocket = optarg; /* unix-domain socket */ break;
 		case 'c': if (i_am_root) { changeroot = optarg; }/* chroot() */ break;
 		case 'u': if (i_am_root) { username = optarg; } /* set user */ break;
@@ -581,7 +584,7 @@ int main(int argc, char **argv) {
 		if (0 == sockuid) sockuid = uid;
 		if (0 == sockgid) sockgid = gid;
 
-		if (sockbeforechroot && -1 == (fcgi_fd = bind_socket(addr, port, unixsocket, sockuid, sockgid, sockmode)))
+		if (sockbeforechroot && -1 == (fcgi_fd = bind_socket(addr, port, unixsocket, sockuid, sockgid, sockmode, backlog)))
 			return -1;
 
 		/* Change group before chroot, when we have access
@@ -606,7 +609,7 @@ int main(int argc, char **argv) {
 			}
 		}
 
-		if (!sockbeforechroot && -1 == (fcgi_fd = bind_socket(addr, port, unixsocket, sockuid, sockgid, sockmode)))
+		if (!sockbeforechroot && -1 == (fcgi_fd = bind_socket(addr, port, unixsocket, sockuid, sockgid, sockmode, backlog)))
 			return -1;
 
 		/* drop root privs */
@@ -614,7 +617,7 @@ int main(int argc, char **argv) {
 			setuid(uid);
 		}
 	} else {
-		if (-1 == (fcgi_fd = bind_socket(addr, port, unixsocket, 0, 0, sockmode)))
+		if (-1 == (fcgi_fd = bind_socket(addr, port, unixsocket, 0, 0, sockmode, backlog)))
 			return -1;
 	}
 
