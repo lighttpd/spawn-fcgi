@@ -9,6 +9,7 @@ NEWS
   * Restrict Unix socket file ownership by default to ug=rw
   * Add example apparmor spawn-fcgi abstraction
   * Use autoreconf instead of calling tools manually
+  * Add more flags to extra-warning flags
 
 - 1.6.3 - 2009-09-23
   * Fix unix socket mode change to work without specifying user/group for socket
