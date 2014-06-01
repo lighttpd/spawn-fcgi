@@ -85,6 +85,20 @@ static mode_t read_umask(void) {
 	return mask;
 }
 
+static ssize_t write_all(int fildes, const void *buf, size_t nbyte) {
+	size_t rem;
+	for (rem = nbyte; rem > 0;) {
+		ssize_t res = write(fildes, buf, rem);
+		if (-1 == res) {
+			if (EINTR != errno) return res;
+		} else {
+			buf = res + (char const*) buf;
+			rem -= res;
+		}
+	}
+	return nbyte;
+}
+
 static int bind_socket(const char *addr, unsigned short port, const char *unixsocket, uid_t uid, gid_t gid, mode_t mode, int backlog) {
 	int fcgi_fd, socket_type, val;
 
@@ -307,16 +321,24 @@ static int fcgi_spawn_connection(char *appPath, char **appArgv, int fcgi_fd, int
 				fprintf(stdout, "spawn-fcgi: child spawned successfully: PID: %d\n", child);
 
 				/* write pid file */
-				if (pid_fd != -1) {
+				if (-1 != pid_fd) {
 					/* assume a 32bit pid_t */
 					char pidbuf[12];
 
 					snprintf(pidbuf, sizeof(pidbuf) - 1, "%d", child);
 
-					write(pid_fd, pidbuf, strlen(pidbuf));
+					if (-1 == write_all(pid_fd, pidbuf, strlen(pidbuf))) {
+						fprintf(stderr, "spawn-fcgi: writing pid file failed: %s\n", strerror(errno));
+						close(pid_fd);
+						pid_fd = -1;
+					}
 					/* avoid eol for the last one */
-					if (fork_count != 0) {
-						write(pid_fd, "\n", 1);
+					if (-1 != pid_fd && fork_count != 0) {
+						if (-1 == write_all(pid_fd, "\n", 1)) {
+							fprintf(stderr, "spawn-fcgi: writing pid file failed: %s\n", strerror(errno));
+							close(pid_fd);
+							pid_fd = -1;
+						}
 					}
 				}
 
@@ -342,7 +364,10 @@ static int fcgi_spawn_connection(char *appPath, char **appArgv, int fcgi_fd, int
 			break;
 		}
 	}
-	close(pid_fd);
+
+	if (-1 != pid_fd) {
+		close(pid_fd);
+	}
 
 	close(fcgi_fd);
 
@@ -410,14 +435,14 @@ static int find_user_group(const char *user, const char *group, uid_t *uid, gid_
 }
 
 static void show_version () {
-	write(1, CONST_STR_LEN(
+	(void) write_all(1, CONST_STR_LEN(
 		PACKAGE_DESC \
 		"Build-Date: " __DATE__ " " __TIME__ "\n"
 	));
 }
 
 static void show_help () {
-	write(1, CONST_STR_LEN(
+	(void) write_all(1, CONST_STR_LEN(
 		"Usage: spawn-fcgi [options] [-- <fcgiapp> [fcgi app arguments]]\n" \
 		"\n" \
 		PACKAGE_DESC \
@@ -598,10 +623,19 @@ int main(int argc, char **argv) {
 		 * to /etc/group
 		 */
 		if (gid != 0) {
-			setgid(gid);
-			setgroups(0, NULL);
+			if (-1 == setgid(gid)) {
+				fprintf(stderr, "spawn-fcgi: setgid(%i) failed: %s\n", (int) gid, strerror(errno));
+				return -1;
+			}
+			if (-1 == setgroups(0, NULL)) {
+				fprintf(stderr, "spawn-fcgi: setgroups(0, NULL) failed: %s\n", strerror(errno));
+				return -1;
+			}
 			if (real_username) {
-				initgroups(real_username, gid);
+				if (-1 == initgroups(real_username, gid)) {
+					fprintf(stderr, "spawn-fcgi: initgroups('%s', %i) failed: %s\n", real_username, (int) gid, strerror(errno));
+					return -1;
+				}
 			}
 		}
 
@@ -621,7 +655,10 @@ int main(int argc, char **argv) {
 
 		/* drop root privs */
 		if (uid != 0) {
-			setuid(uid);
+			if (-1 == setuid(uid)) {
+				fprintf(stderr, "spawn-fcgi: setuid(%i) failed: %s\n", (int) uid, strerror(errno));
+				return -1;
+			}
 		}
 	} else {
 		if (-1 == (fcgi_fd = bind_socket(addr, port, unixsocket, 0, 0, sockmode, backlog)))
