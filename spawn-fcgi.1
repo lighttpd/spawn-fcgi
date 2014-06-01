@@ -82,7 +82,8 @@ Name of the PID file for spawned processes (ignored in no-fork mode)
 No forking should take place (for daemontools)
 .TP 8
 .B  \-M <mode>
-Change file mode of the Unix domain socket; only used if \-s is given too.
+Change file mode of the Unix domain socket (octal integer); only used if \-s is given too.
+Defaults to read+write for user and group (0660) as far as the umask allows it.
 .TP 8
 .B  \-?, \-h
 General usage instructions

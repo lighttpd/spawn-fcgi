@@ -79,7 +79,13 @@ static int issetugid() {
 
 #define CONST_STR_LEN(s) s, sizeof(s) - 1
 
-static int bind_socket(const char *addr, unsigned short port, const char *unixsocket, uid_t uid, gid_t gid, int mode, int backlog) {
+static mode_t read_umask(void) {
+	mode_t mask = umask(0);
+	umask(mask);
+	return mask;
+}
+
+static int bind_socket(const char *addr, unsigned short port, const char *unixsocket, uid_t uid, gid_t gid, mode_t mode, int backlog) {
 	int fcgi_fd, socket_type, val;
 
 	struct sockaddr_un fcgi_addr_un;
@@ -189,6 +195,13 @@ static int bind_socket(const char *addr, unsigned short port, const char *unixso
 	}
 
 	if (unixsocket) {
+		if (-1 == chmod(unixsocket, mode)) {
+			fprintf(stderr, "spawn-fcgi: couldn't chmod socket: %s\n", strerror(errno));
+			close(fcgi_fd);
+			unlink(unixsocket);
+			return -1;
+		}
+
 		if (0 != uid || 0 != gid) {
 			if (0 == uid) uid = -1;
 			if (0 == gid) gid = -1;
@@ -198,13 +211,6 @@ static int bind_socket(const char *addr, unsigned short port, const char *unixso
 				unlink(unixsocket);
 				return -1;
 			}
-		}
-
-		if (-1 != mode && -1 == chmod(unixsocket, mode)) {
-			fprintf(stderr, "spawn-fcgi: couldn't chmod socket: %s\n", strerror(errno));
-			close(fcgi_fd);
-			unlink(unixsocket);
-			return -1;
 		}
 	}
 
@@ -423,7 +429,8 @@ static void show_help () {
 		" -a <address>   bind to IPv4/IPv6 address (defaults to 0.0.0.0)\n" \
 		" -p <port>      bind to TCP-port\n" \
 		" -s <path>      bind to Unix domain socket\n" \
-		" -M <mode>      change Unix domain socket mode\n" \
+		" -M <mode>      change Unix domain socket mode (octal integer, default: allow\n" \
+		"                read+write for user and group as far as umask allows it) \n" \
 		" -C <children>  (PHP only) numbers of childs to spawn (default: not setting\n" \
 		"                the PHP_FCGI_CHILDREN environment variable - PHP defaults to 0)\n" \
 		" -F <children>  number of children to fork (default 1)\n" \
@@ -453,7 +460,7 @@ int main(int argc, char **argv) {
 	char **fcgi_app_argv = { NULL };
 	char *endptr = NULL;
 	unsigned short port = 0;
-	int sockmode = -1;
+	mode_t sockmode =  (S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP) & ~read_umask();
 	int child_count = -1;
 	int fork_count = 1;
 	int backlog = 1024;
