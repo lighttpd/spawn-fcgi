@@ -115,6 +115,8 @@ static int bind_socket(const char *addr, unsigned short port, const char *unixso
 		memset(&fcgi_addr_un, 0, sizeof(fcgi_addr_un));
 
 		fcgi_addr_un.sun_family = AF_UNIX;
+		/* already checked in main() */
+		if (strlen(unixsocket) > sizeof(fcgi_addr_un.sun_path) - 1) return -1;
 		strcpy(fcgi_addr_un.sun_path, unixsocket);
 
 #ifdef SUN_LEN
