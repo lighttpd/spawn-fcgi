@@ -132,6 +132,7 @@ static int bind_socket(const char *addr, unsigned short port, const char *unixso
 				break;
 			default:
 				fprintf(stderr, "spawn-fcgi: removing old socket failed: %s\n", strerror(errno));
+				close(fcgi_fd);
 				return -1;
 			}
 		}
