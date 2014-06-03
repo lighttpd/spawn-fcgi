@@ -24,20 +24,6 @@
 
 #define FCGI_LISTENSOCK_FILENO 0
 
-/* "sys-socket.h" */
-#ifdef __WIN32
-
-# include <winsock2.h>
-
-# define ECONNRESET WSAECONNRESET
-# define EINPROGRESS WSAEINPROGRESS
-# define EALREADY WSAEALREADY
-# define ECONNABORTED WSAECONNABORTED
-# define ioctl ioctlsocket
-# define hstrerror(x) ""
-
-#else /* _WIN32 */
-
 # include <sys/socket.h>
 # include <sys/ioctl.h>
 # include <netinet/in.h>
@@ -46,9 +32,6 @@
 # include <arpa/inet.h>
 
 # include <netdb.h>
-
-#endif /* _WIN32 */
-/* end "sys-socket.h" */
 
 #ifdef HAVE_SYS_WAIT_H
 # include <sys/wait.h>
