@@ -185,11 +185,13 @@ static int bind_socket(const char *addr, unsigned short port, const char *unixso
 	val = 1;
 	if (setsockopt(fcgi_fd, SOL_SOCKET, SO_REUSEADDR, &val, sizeof(val)) < 0) {
 		fprintf(stderr, "spawn-fcgi: couldn't set SO_REUSEADDR: %s\n", strerror(errno));
+		close(fcgi_fd);
 		return -1;
 	}
 
 	if (-1 == bind(fcgi_fd, fcgi_addr, servlen)) {
 		fprintf(stderr, "spawn-fcgi: bind failed: %s\n", strerror(errno));
+		close(fcgi_fd);
 		return -1;
 	}
 
@@ -215,6 +217,8 @@ static int bind_socket(const char *addr, unsigned short port, const char *unixso
 
 	if (-1 == listen(fcgi_fd, backlog)) {
 		fprintf(stderr, "spawn-fcgi: listen failed: %s\n", strerror(errno));
+		close(fcgi_fd);
+		if (unixsocket) unlink(unixsocket);
 		return -1;
 	}
 
@@ -283,6 +287,8 @@ static int fcgi_spawn_connection(char *appPath, char **appArgv, int fcgi_fd, int
 
 				/* exec the cgi */
 				execl("/bin/sh", "sh", "-c", b, (char *)NULL);
+
+				free(b);
 			}
 
 			/* in nofork mode stderr is still open */

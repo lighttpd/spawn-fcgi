@@ -12,6 +12,7 @@ NEWS
   * Add more flags to extra-warning flags
   * Check return values of setuid, setgid, setgroups, initgroups, write
   * Check whether compiler supports wanted CFLAGS (fixes #2235)
+  * Fix resource leaks in failure cases (found with coverity)
 
 - 1.6.3 - 2009-09-23
   * Fix unix socket mode change to work without specifying user/group for socket
