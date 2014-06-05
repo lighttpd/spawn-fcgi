@@ -41,4 +41,11 @@ network inet6 stream,
 network inet  dgram,
 network inet6 dgram,
 
+# if the binary is compiled with hardening options it might try to make a
+# previously writable mmapped area readonly (RELRO, mprotect PROT_READ), which
+# requires additional permissions in AppArmor.
+# more permissions -> more secure, obviously.
+# again match standard location + debian alternatives:
+/usr/bin/spawn-fcgi* r,
+
 /{,var/}run/*.sock rw,
