@@ -3,6 +3,8 @@
 NEWS
 ====
 
+- 1.6.5 -
+
 - 1.6.4 - 2014-06-05
   * Use octal mode for -M (patch by dfjoerg)
   * Add -b backlog option (fixes #2422, patch by aschmitz)
