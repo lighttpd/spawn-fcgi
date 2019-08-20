@@ -6,7 +6,7 @@ spawn-fcgi
 :authors: Jan Kneschke, Stefan Bühler
 
 :homepage:
-  http://redmine.lighttpd.net/projects/spawn-fcgi
+  https://redmine.lighttpd.net/projects/spawn-fcgi
 
 :abstract:
   spawn-fcgi is used to spawn FastCGI applications
