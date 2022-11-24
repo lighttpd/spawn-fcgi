@@ -1,10 +1,10 @@
 #                                               -*- Autoconf -*-
 # Process this file with autoconf to produce a configure script.
 
-AC_PREREQ(2.61)
+AC_PREREQ([2.69])
 AC_INIT([spawn-fcgi],[1.6.5])
 AC_CONFIG_SRCDIR([src/spawn-fcgi.c])
-AC_CONFIG_HEADER([config.h])
+AC_CONFIG_HEADERS([config.h])
 
 AM_INIT_AUTOMAKE([-Wall -Werror foreign])
 
@@ -55,7 +55,7 @@ AC_CHECK_FUNCS([issetugid inet_pton])
 # Check for IPv6 support
 
 AC_ARG_ENABLE(ipv6,
-  AC_HELP_STRING([--disable-ipv6],[disable IPv6 support]),
+  AS_HELP_STRING([--disable-ipv6],[disable IPv6 support]),
   [case "${enableval}" in
    yes) ipv6=true ;;
     no) ipv6=false ;;
@@ -64,13 +64,13 @@ AC_ARG_ENABLE(ipv6,
 
 if test x$ipv6 = xtrue; then
   AC_CACHE_CHECK([for IPv6 support], ac_cv_ipv6_support,
-    [AC_TRY_LINK([
+    [AC_LINK_IFELSE([AC_LANG_PROGRAM([[
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
-    ], [
+    ]], [[
 struct sockaddr_in6 s; struct in6_addr t=in6addr_any; int i=AF_INET6; s; t.s6_addr[0] = 0;
-    ], [ac_cv_ipv6_support=yes], [ac_cv_ipv6_support=no])])
+    ]])],[ac_cv_ipv6_support=yes],[ac_cv_ipv6_support=no])])
 
   if test "$ac_cv_ipv6_support" = yes; then
     AC_DEFINE(HAVE_IPV6,1,[Whether to enable IPv6 support])
