@@ -75,13 +75,13 @@ AC_ARG_ENABLE(ipv6,
 
 if test x$ipv6 = xtrue; then
   AC_CACHE_CHECK([for IPv6 support], ac_cv_ipv6_support,
-    [AC_TRY_LINK([[
+    [AC_TRY_LINK([
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
-    ]], [[
+    ], [
 struct sockaddr_in6 s; struct in6_addr t=in6addr_any; int i=AF_INET6; s; t.s6_addr[0] = 0;
-    ]], [ac_cv_ipv6_support=yes], [ac_cv_ipv6_support=no])])
+    ], [ac_cv_ipv6_support=yes], [ac_cv_ipv6_support=no])])
 
   if test "$ac_cv_ipv6_support" = yes; then
     AC_DEFINE(HAVE_IPV6,1,[Whether to enable IPv6 support])
