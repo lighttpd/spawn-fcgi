@@ -24,14 +24,14 @@
 
 #define FCGI_LISTENSOCK_FILENO 0
 
-# include <sys/socket.h>
-# include <sys/ioctl.h>
-# include <netinet/in.h>
-# include <netinet/tcp.h>
-# include <sys/un.h>
-# include <arpa/inet.h>
+#include <sys/socket.h>
+#include <sys/ioctl.h>
+#include <netinet/in.h>
+#include <netinet/tcp.h>
+#include <sys/un.h>
+#include <arpa/inet.h>
 
-# include <netdb.h>
+#include <netdb.h>
 
 #ifdef HAVE_SYS_WAIT_H
 # include <sys/wait.h>

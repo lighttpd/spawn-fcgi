@@ -34,19 +34,14 @@ AC_DEFUN([TRY_CFLAGS],
 # Checks for libraries.
 
 # Checks for header files.
-AC_HEADER_STDC
 AC_HEADER_SYS_WAIT
-AC_CHECK_HEADERS([arpa/inet.h errno.h fcntl.h getopt.h grp.h netdb.h \
-                  netinet/in.h netinet/tcp.h pwd.h stdio.h stdlib.h \
-                  string.h sys/ioctl.h sys/socket.h sys/stat.h sys/time.h \
-                  sys/types.h sys/un.h sys/wait.h unistd.h])
+AC_CHECK_HEADERS([getopt.h pwd.h])
 
 
 # Checks for typedefs, structures, and compiler characteristics.
 AC_C_CONST
 AC_TYPE_UID_T
 AC_TYPE_PID_T
-AC_HEADER_TIME
 AC_CHECK_TYPES(socklen_t,,,[#include <sys/types.h>
 #include <sys/socket.h>])
 
@@ -55,13 +50,7 @@ AC_SEARCH_LIBS([socket],[socket])
 AC_SEARCH_LIBS([inet_addr],[nsl socket])
 
 # Checks for library functions.
-AC_FUNC_CHOWN
-AC_FUNC_FORK
-AC_FUNC_MALLOC
-AC_FUNC_SELECT_ARGTYPES
-AC_FUNC_STAT
-AC_CHECK_FUNCS([dup2 memset putenv select socket strerror strtol issetugid inet_pton])
-
+AC_CHECK_FUNCS([issetugid inet_pton])
 
 # Check for IPv6 support
 
