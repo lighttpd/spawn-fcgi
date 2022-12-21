@@ -3,7 +3,9 @@
 NEWS
 ====
 
-- 1.6.5 -
+- 1.6.5 - 2022-12-21
+  * Configure script cleanups (fixing detection of IPv6)
+  * Update links and email addresses
 
 - 1.6.4 - 2014-06-05
   * Use octal mode for -M (patch by dfjoerg)
