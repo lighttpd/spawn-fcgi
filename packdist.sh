@@ -81,9 +81,8 @@ if [ ${dopack} = "1" ]; then
 	# force make check
 
 	force make distcheck
-	force make dist-gzip
-	force make dist-bzip2
 	force make dist-xz
+	force make dist-gzip
 else
 	force cd distbuild
 fi
@@ -102,34 +101,29 @@ fi
 
 downloadbaseurl="https://download.lighttpd.net/spawn-fcgi/releases-1.6.x"
 if [ -n "${append}" ]; then
-	cp "${name}.tar.gz" "${name}${append}.tar.gz"
-	cp "${name}.tar.bz2" "${name}${append}.tar.bz2"
 	cp "${name}.tar.xz" "${name}${append}.tar.xz"
+	cp "${name}.tar.gz" "${name}${append}.tar.gz"
 	name="${name}${append}"
 	downloadbaseurl="https://download.lighttpd.net/spawn-fcgi/snapshots-1.6.x"
 fi
 
-force sha256sum "${name}.tar."{gz,bz2,xz} > "${name}.sha256sum"
+force sha256sum "${name}.tar."{xz,gz} > "${name}.sha256sum"
 
 rm -f "${name}".tar.*.asc
 
-force gpg -a --output "${name}.tar.gz.asc" --detach-sig "${name}.tar.gz"
-force gpg -a --output "${name}.tar.bz2.asc" --detach-sig "${name}.tar.bz2"
 force gpg -a --output "${name}.tar.xz.asc" --detach-sig "${name}.tar.xz"
+force gpg -a --output "${name}.tar.gz.asc" --detach-sig "${name}.tar.gz"
 
 (
 	echo "h1. Downloads"
 	echo
-	echo "* ${downloadbaseurl}/${name}.tar.gz"
-	echo "** GPG signature: ${downloadbaseurl}/${name}.tar.gz.asc"
-	echo "** SHA256: @$(sha256sum ${name}.tar.gz | cut -d' ' -f1)@"
-	echo "* ${downloadbaseurl}/${name}.tar.bz2"
-	echo "** GPG signature: ${downloadbaseurl}/${name}.tar.bz2.asc"
-	echo "** SHA256: @$(sha256sum ${name}.tar.bz2 | cut -d' ' -f1)@"
 	echo "* ${downloadbaseurl}/${name}.tar.xz"
 	echo "** GPG signature: ${downloadbaseurl}/${name}.tar.xz.asc"
 	echo "** SHA256: @$(sha256sum ${name}.tar.xz | cut -d' ' -f1)@"
 	echo "* SHA256 checksums: ${downloadbaseurl}/${name}.sha256sum"
+	echo "* ${downloadbaseurl}/${name}.tar.gz"
+	echo "** GPG signature: ${downloadbaseurl}/${name}.tar.gz.asc"
+	echo "** SHA256: @$(sha256sum ${name}.tar.gz | cut -d' ' -f1)@"
 ) > DOWNLOADS
 
 force genchanges
@@ -152,4 +146,4 @@ echo
 echo -------
 echo
 
-echo wget "${downloadbaseurl}/${name}".'{tar.gz,tar.bz2,tar.xz,sha256sum}; sha256sum -c '${name}'.sha256sum'
+echo wget "${downloadbaseurl}/${name}".'{tar.xz,tar.gz,sha256sum}; sha256sum -c '${name}'.sha256sum'
