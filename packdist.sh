@@ -42,24 +42,24 @@ genchanges() {
 # genereate links in old textile format "text":url
 genlinks_changes() {
 	local repourl ticketurl inf out
-	repourl="http://redmine.lighttpd.net/projects/spawn-fcgi/repository/revisions/"
-	ticketurl="http://redmine.lighttpd.net/issues/show/"
+	repourl="https://redmine.lighttpd.net/projects/spawn-fcgi/repository/revisions/"
+	ticketurl="https://redmine.lighttpd.net/issues/show/"
 	inf="$1"
 	outf="$1".links
 	(
-		sed -e 's%\(http://[a-zA-Z0-9.:_/\-]\+\)%"\1":\1%g' |
+		sed -e 's%\(https://[a-zA-Z0-9.:_/\-]\+\)%"\1":\1%g' |
 		sed -e 's%#\([0-9]\+\)%"#\1":'"${ticketurl}"'\1%g' |
 		sed -e 's%r\([0-9]\+\)%"r\1":'"${repourl}"'\1%g'
 	) < "$inf" > "$outf"
 }
 genlinks_downloads() {
 	local repourl ticketurl inf out
-	repourl="http://redmine.lighttpd.net/projects/spawn-fcgi/repository/revisions/"
-	ticketurl="http://redmine.lighttpd.net/issues/show/"
+	repourl="https://redmine.lighttpd.net/projects/spawn-fcgi/repository/revisions/"
+	ticketurl="https://redmine.lighttpd.net/issues/show/"
 	inf="$1"
 	outf="$1".links
 	(
-		sed -e 's%\(http://[a-zA-Z0-9.:_/\-]\+\)%"\1":\1%g'
+		sed -e 's%\(https://[a-zA-Z0-9.:_/\-]\+\)%"\1":\1%g'
 	) < "$inf" > "$outf"
 }
 
@@ -100,13 +100,13 @@ if [ -x "$(which tardiff)" -a -x "$(which git)" ]; then
 	force tardiff --modified --autoskip "${tmpdir}/git-archive.tar.gz" "${name}.tar.gz"
 fi
 
-downloadbaseurl="http://download.lighttpd.net/spawn-fcgi/releases-1.6.x"
+downloadbaseurl="https://download.lighttpd.net/spawn-fcgi/releases-1.6.x"
 if [ -n "${append}" ]; then
 	cp "${name}.tar.gz" "${name}${append}.tar.gz"
 	cp "${name}.tar.bz2" "${name}${append}.tar.bz2"
 	cp "${name}.tar.xz" "${name}${append}.tar.xz"
 	name="${name}${append}"
-	downloadbaseurl="http://download.lighttpd.net/spawn-fcgi/snapshots-1.6.x"
+	downloadbaseurl="https://download.lighttpd.net/spawn-fcgi/snapshots-1.6.x"
 fi
 
 force sha256sum "${name}.tar."{gz,bz2,xz} > "${name}.sha256sum"
