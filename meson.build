@@ -39,23 +39,11 @@ if get_option('extra-warnings')
   ]
 endif
 
-check_sys_includes = [
-  'getopt.h',
-  'pwd.h',
-  'sys/wait.h',
-]
-
 check_libc_functions = [
   'issetugid',
-  'inet_pton',
 ]
 
 # run compiler/env checks
-foreach sys_include: check_sys_includes
-  if compiler.has_header(sys_include)
-    conf_data.set10('HAVE_' + sys_include.underscorify().to_upper(), true)
-  endif
-endforeach
 foreach libc_function: check_libc_functions
   if compiler.has_function(libc_function)
     conf_data.set10('HAVE_' + libc_function.underscorify().to_upper(), true)
@@ -77,7 +65,7 @@ endif
 
 # IPv6 support is mandatory by default
 if get_option('ipv6')
-  if compiler.has_type(
+  has_sockaddr_in6 = compiler.has_type(
     'struct sockaddr_in6',
     prefix: '\n'.join([
       '#include <sys/types.h>',
@@ -85,9 +73,12 @@ if get_option('ipv6')
       '#include <netinet/in.h>',
     ]),
   )
-    conf_data.set10('HAVE_IPV6', true)
+  has_inet_pton = compiler.has_function('inet_pton')
+
+  if has_sockaddr_in6 and has_inet_pton
+    conf_data.set10('USE_IPV6', true)
   else
-    error('Missing struct sockaddr_in6, needed for IPv6 support')
+    error('Missing struct sockaddr_in6 or inet_pton, required for IPv6 support')
   endif
 endif
 

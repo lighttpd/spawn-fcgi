@@ -1,6 +1,8 @@
-#ifdef HAVE_CONFIG_H
-# include "config.h"
-#endif
+#define _GNU_SOURCE
+#define _DEFAULT_SOURCE
+#define _XOPEN_SOURCE 600
+
+#include "config.h"
 
 #include <sys/types.h>
 #include <sys/time.h>
@@ -13,14 +15,10 @@
 #include <unistd.h>
 #include <fcntl.h>
 
-#ifdef HAVE_PWD_H
-# include <grp.h>
-# include <pwd.h>
-#endif
+#include <grp.h>
+#include <pwd.h>
 
-#ifdef HAVE_GETOPT_H
-# include <getopt.h>
-#endif
+#include <getopt.h>
 
 #define FCGI_LISTENSOCK_FILENO 0
 
@@ -33,9 +31,7 @@
 
 #include <netdb.h>
 
-#ifdef HAVE_SYS_WAIT_H
-# include <sys/wait.h>
-#endif
+#include <sys/wait.h>
 
 /* for solaris 2.5 and netbsd 1.3.x */
 #ifndef HAVE_SOCKLEN_T
@@ -46,10 +42,6 @@ typedef int socklen_t;
 static int issetugid() {
 	return (geteuid() != getuid() || getegid() != getgid());
 }
-#endif
-
-#if defined(HAVE_IPV6) && defined(HAVE_INET_PTON)
-# define USE_IPV6
 #endif
 
 #ifdef USE_IPV6
@@ -155,25 +147,27 @@ static int bind_socket(const char *addr, unsigned short port, const char *unixso
 
 		if (addr == NULL) {
 			fcgi_addr_in.sin_addr.s_addr = htonl(INADDR_ANY);
-#ifdef HAVE_INET_PTON
-		} else if (1 == inet_pton(AF_INET, addr, &fcgi_addr_in.sin_addr)) {
-			/* nothing to do */
-#ifdef HAVE_IPV6
-		} else if (1 == inet_pton(AF_INET6, addr, &fcgi_addr_in6.sin6_addr)) {
+		/* while inet_pton has a better error API, prefer using the same IPv4 address
+		 * parser logic on all platforms.
+		 * -1 corresponds to 255.255.255.255 which we don't want to bind to anyway.
+		 */
+		} else if ((in_addr_t)(-1) != (fcgi_addr_in.sin_addr.s_addr = inet_addr(addr))) {
+			/* nothing to do; defaulted to IPv4 socket above */
+		}
+#ifdef USE_IPV6
+		else if (1 == inet_pton(AF_INET6, addr, &fcgi_addr_in6.sin6_addr)) {
 			servlen = sizeof(fcgi_addr_in6);
 			socket_type = AF_INET6;
 			fcgi_addr = (struct sockaddr *) &fcgi_addr_in6;
+		}
 #endif
-		} else {
+		else {
+#ifdef USE_IPV6
 			fprintf(stderr, "spawn-fcgi: '%s' is not a valid IP address\n", addr);
-			return -1;
 #else
-		} else {
-			if ((in_addr_t)(-1) == (fcgi_addr_in.sin_addr.s_addr = inet_addr(addr))) {
-				fprintf(stderr, "spawn-fcgi: '%s' is not a valid IPv4 address\n", addr);
-				return -1;
-			}
+			fprintf(stderr, "spawn-fcgi: '%s' is not a valid IPv4 address\n", addr);
 #endif
+			return -1;
 		}
 	}
 
