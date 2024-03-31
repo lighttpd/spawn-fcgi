@@ -3,6 +3,8 @@
 NEWS
 ====
 
+- 1.6.6 -
+
 - 1.6.5 - 2022-12-21
   * Configure script cleanups (fixing detection of IPv6)
   * Update links and email addresses

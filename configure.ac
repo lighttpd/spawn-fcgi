@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ([2.69])
-AC_INIT([spawn-fcgi],[1.6.5])
+AC_INIT([spawn-fcgi],[1.6.6])
 AC_CONFIG_SRCDIR([src/spawn-fcgi.c])
 AC_CONFIG_HEADERS([config.h])
 
