@@ -16,19 +16,19 @@
 
 ## Build
 
-If ./configure is missing, run ./autogen.sh.
+[meson](https://mesonbuild.com/) is required to build.
 
-    ./configure
-    make
-    make install
+Setup a build directory `build`:
 
-Alternatively you can use the cmake build system (may not work
-on every platform):
+    meson setup build --prefix /usr/local
 
-    cmake .
-    make
-    make install
+Compile it:
 
+    meson compile -C build
+
+Install:
+
+    meson install -C build
 
 ### Usage
 

@@ -1,0 +1,2 @@
+option('ipv6', type : 'boolean', value : true, description : 'Build with IPv6 support')
+option('extra-warnings', type : 'boolean', value : true, description : 'Build with extra warnings enabled')

@@ -1,24 +1,11 @@
 #!/bin/bash
 
-SRCTEST=src/spawn-fcgi.c
-PACKAGE=spawn-fcgi
-
 # may take one argument for prereleases like
 # ./packdist.sh [--nopack] -rc1-r10
 
+builddir=distbuild
 tmpdir=$(mktemp --tmpdir -d packdist-XXXXXXX)
 trap 'rm -rf "${tmpdir}"' EXIT
-
-if [ ! -f ${SRCTEST} ]; then
-	echo "Current directory is not the source directory"
-	exit 1
-fi
-
-dopack=1
-if [ "$1" = "--nopack" ]; then
-	dopack=0
-	shift
-fi
 
 append="$1"
 
@@ -34,70 +21,47 @@ genchanges() {
 	(
 		echo "h1. Changes"
 		echo
-		cat ../NEWS | sed "/^- ${version}/,/^-/p;d" | sed "/^- /d;/^$/d" | sed -e 's/^  \*/\*/'
+		cat "${self}/NEWS" | sed "/^- ${version}/,/^-/p;d" | sed "/^- /d;/^$/d" | sed -e 's/^  \*/\*/'
 	) > CHANGES
 	return 0
 }
 
-# genereate links in old textile format "text":url
-genlinks_changes() {
-	local repourl ticketurl inf out
-	repourl="https://redmine.lighttpd.net/projects/spawn-fcgi/repository/revisions/"
-	ticketurl="https://redmine.lighttpd.net/issues/show/"
-	inf="$1"
-	outf="$1".links
-	(
-		sed -e 's%\(https://[a-zA-Z0-9.:_/\-]\+\)%"\1":\1%g' |
-		sed -e 's%#\([0-9]\+\)%"#\1":'"${ticketurl}"'\1%g' |
-		sed -e 's%r\([0-9]\+\)%"r\1":'"${repourl}"'\1%g'
-	) < "$inf" > "$outf"
-}
-genlinks_downloads() {
-	local repourl ticketurl inf out
-	repourl="https://redmine.lighttpd.net/projects/spawn-fcgi/repository/revisions/"
-	ticketurl="https://redmine.lighttpd.net/issues/show/"
-	inf="$1"
-	outf="$1".links
-	(
-		sed -e 's%\(https://[a-zA-Z0-9.:_/\-]\+\)%"\1":\1%g'
-	) < "$inf" > "$outf"
-}
+self=$(dirname "$(readlink -f "$0")")
+force cd "${self}"
 
-if [ ${dopack} = "1" ]; then
-	force ./autogen.sh
-
-	if [ -d distbuild ]; then
-		# make distcheck may leave readonly files
-		chmod u+w -R distbuild
-		rm -rf distbuild
-	fi
-
-	force mkdir distbuild
-	force cd distbuild
-
-	force ../configure --prefix=/usr
-
-	# force make
-	# force make check
-
-	force make distcheck
-	force make dist-xz
-	force make dist-gzip
-else
-	force cd distbuild
+if [ -d "${builddir}" ]; then
+	# make distcheck may leave readonly files
+	chmod u+w -R "${builddir}"
+	rm -rf "${builddir}"
 fi
 
-version=`./config.status -V | head -n 1 | cut -d' ' -f3`
-name="${PACKAGE}-${version}"
+force meson setup "${builddir}"
+# meson dist ensures tree isn't dirty, and also compiles/tests
+force meson dist -C "${builddir}" --formats gztar
 
-if [ -x "$(which tardiff)" -a -x "$(which git)" ]; then
-	force cd ..
-	force git archive --format tar.gz -o "${tmpdir}/git-archive.tar.gz" --prefix "${name}/" HEAD
-	force cd distbuild
+package=$(meson introspect "${builddir}" --projectinfo | jq -r '.descriptive_name')
+version=$(meson introspect "${builddir}" --projectinfo | jq -r '.version')
+name="${package}-${version}"
 
-	echo "Diff git -> dist tar"
-	force tardiff --modified --autoskip "${tmpdir}/git-archive.tar.gz" "${name}.tar.gz"
+if [ -z "${package}" -o -z "${version}" ]; then
+	echo >&2 "Failed extracting package name and/or version"
+	exit 1
 fi
+
+# meson dist isn't reproducable (meson offers dist hooks and probably uses current time;
+# git archive uses timestamps from git commit).
+# so use git archive instead of meson dist, but show tardiff (should be empty; timestamps not shown).
+# (still use meson dist for compile/tests run)
+
+force git archive --format tar -o "${builddir}/${name}.tar" --prefix "${name}/" HEAD
+force gzip -n --keep "${builddir}/${name}.tar"
+force xz --keep "${builddir}/${name}.tar"
+force rm "${builddir}/${name}.tar"
+
+echo "Diff git -> meson dist tar.gz"
+force tardiff --modified --autoskip "${builddir}/${name}.tar.gz" "${builddir}/meson-dist/${name}.tar.gz"
+
+force cd "${builddir}"
 
 downloadbaseurl="https://download.lighttpd.net/spawn-fcgi/releases-1.6.x"
 if [ -n "${append}" ]; then
@@ -108,8 +72,6 @@ if [ -n "${append}" ]; then
 fi
 
 force sha256sum "${name}.tar."{xz,gz} > "${name}.sha256sum"
-
-rm -f "${name}".tar.*.asc
 
 force gpg -a --output "${name}.tar.xz.asc" --detach-sig "${name}.tar.xz"
 force gpg -a --output "${name}.tar.gz.asc" --detach-sig "${name}.tar.gz"
@@ -127,23 +89,12 @@ force gpg -a --output "${name}.tar.gz.asc" --detach-sig "${name}.tar.gz"
 ) > DOWNLOADS
 
 force genchanges
-force genlinks_changes CHANGES
-force genlinks_downloads DOWNLOADS
 
+echo -------
 cat CHANGES
 echo
 cat DOWNLOADS
-
-echo
 echo -------
-echo
 
-cat CHANGES.links
-echo
-cat DOWNLOADS.links
-
-echo
-echo -------
-echo
-
+echo "scp ${builddir}/meson-dist/${name}.{tar*,sha256sum} lighttpd.net:..."
 echo wget "${downloadbaseurl}/${name}".'{tar.xz,tar.gz,sha256sum}; sha256sum -c '${name}'.sha256sum'
