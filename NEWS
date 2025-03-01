@@ -3,6 +3,8 @@
 NEWS
 ====
 
+- 1.6.7 -
+
 - 1.6.6 - 2025-03-01
   * Use meson instead of autotools and cmake
   * Simplify/reduce configure checks and #ifdefs
