@@ -96,5 +96,5 @@ echo
 cat DOWNLOADS
 echo -------
 
-echo "scp ${builddir}/meson-dist/${name}.{tar*,sha256sum} lighttpd.net:..."
+echo "scp ${builddir}/${name}.{tar*,sha256sum} lighttpd.net:..."
 echo wget "${downloadbaseurl}/${name}".'{tar.xz,tar.gz,sha256sum}; sha256sum -c '${name}'.sha256sum'
