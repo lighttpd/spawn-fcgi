@@ -420,13 +420,13 @@ static int find_user_group(const char *user, const char *group, uid_t *uid, gid_
 	return 0;
 }
 
-static void show_version () {
+static void show_version(void) {
 	(void) write_all(1, CONST_STR_LEN(
 		PACKAGE_DESC
 	));
 }
 
-static void show_help () {
+static void show_help(void) {
 	(void) write_all(1, CONST_STR_LEN(
 		"Usage: spawn-fcgi [options] [-- <fcgiapp> [fcgi app arguments]]\n" \
 		"\n" \
